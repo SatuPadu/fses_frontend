@@ -1,0 +1,16 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ${FRONTEND_CONTAINER_NAME:-fses_frontend}
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "${FRONTEND_PORT:-8001}:8001"
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+      - NUXT_PUBLIC_API_BASE_URL=${API_BASE_URL:-http://localhost:8080/api}
+    restart: unless-stopped
