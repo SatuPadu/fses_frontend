@@ -6,7 +6,7 @@ useHead({
   titleTemplate: (titleChunk) => {
     return titleChunk
       ? `${titleChunk} - 404-Page Not Found`
-      : "Modernize - Nuxt3 Typescript based Free Admin Dashboard Template";
+      : "UTM FSES";
   },
 });
 </script>

@@ -1,14 +1,14 @@
 <script setup lang="ts">
 
 const title = ref(
-  "Modernize - Nuxt3 Typescript based Free Admin Dashboard Template"
+  "UTM FSES"
 );
 useHead({
   meta: [{ content: title }],
   titleTemplate: (titleChunk) => {
     return titleChunk
-      ? `${titleChunk} - Nuxt3 Typescript based Free Admin Dashboard Template`
-      : "Modernize - Nuxt3 Typescript based Free Admin Dashboard Template";
+      ? `${titleChunk}`
+      : "UTM FSES";
   },
 });
 </script>
