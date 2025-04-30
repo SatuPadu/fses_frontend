@@ -6,6 +6,12 @@ import MonthlyEarning from '@/components/dashboard/MonthlyEarnings.vue';
 import RecentTransaction from '@/components/dashboard/RecentTransaction.vue';
 import ProductPerformance from '@/components/dashboard/ProductPerformance.vue';
 import ProductCards from '@/components/dashboard/ProductCards.vue';
+
+function definePageMeta(arg0: {
+    middleware: string[]; // Applies the auth middleware to this page only
+}) {
+    throw new Error('Function not implemented.');
+}
 </script>
 <template>
     <v-row>

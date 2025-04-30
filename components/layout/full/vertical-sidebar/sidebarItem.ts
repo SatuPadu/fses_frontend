@@ -140,12 +140,6 @@ const sidebarItem: menu[] = [
     to: "/auth/login",
     external: false,
   },
-  {
-    title: "Register",
-    icon: UserPlusIcon,
-    to: "/auth/register",
-    external: false,
-  },
   { header: "Extra" },
   {
     title: "Icons",
