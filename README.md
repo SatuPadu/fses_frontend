@@ -1,48 +1,26 @@
-# Modernize-nuxtjs-free
-Free Nuxt 3 Admin Template with vuetify 3 + Typescript
-<img src="https://adminmart.com/wp-content/uploads/2023/02/modernize-free-vuetify-dashboard.png" alt="Free Nuxt 3 Admin Template with vuetify 3 + Typescript"/>
-# <a href="https://modernize-nuxtjs-free.netlify.app">Live Demo </a>
+# Modernize Nuxt.js Frontend
 
+A modern dashboard UI built with Nuxt.js and Vuetify, featuring a clean, responsive design and ready for API integration.
 
-# Nuxt 3 Starter
+## 🚀 Quick Start
 
-> 💚 A Better Nuxt 3 starter template
+### Prerequisites
 
-## Use the Template
+- [Docker](https://www.docker.com/get-started) and Docker Compose
 
-### Clone to local
+### Setup & Run
 
-```bash
+1. Create a `.env` file in the project root
+   ```bash
+   # Create .env file with required configuration
+   FRONTEND_CONTAINER_NAME=modernize_nuxt_frontend
+   FRONTEND_PORT=3000
+   API_BASE_URL=http://localhost:8080/api
+   ```
 
-$>    💿  Install dependencies with `npm install` or `yarn install`
-$>
-$>    🚀  Start development server with `npm run dev` or `yarn dev`
-```
+2. Start the Docker container
+   ```bash
+   docker-compose up
+   ```
 
-## Setup
-
-### Installation
-
-Make sure to install the dependencies
-
-```bash
-yarn install
-```
-
-### Development
-
-Start the development server on http://localhost:3088
-
-```bash
-yarn dev
-```
-
-### Production
-
-Build the application for production:
-
-```bash
-yarn build
-```
-
-
+3. Access the application at: http://localhost:8001
