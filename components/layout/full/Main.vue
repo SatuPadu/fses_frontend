@@ -18,7 +18,7 @@ const sDrawer = ref(true);
   >
     <!---Logo part -->
     <div >
-      <LayoutFullLogo />
+      <LayoutFullLogoDark />
     </div>
     <!-- ---------------------------------------------- -->
     <!---Navigation -->
