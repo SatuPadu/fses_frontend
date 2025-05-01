@@ -1,9 +1,3 @@
-<script setup lang="ts">
-/*-For Set Blank Layout-*/
-definePageMeta({
-  layout: "blank",
-});
-</script>
 <template>
     <div class="authentication">
         <v-container fluid class="pa-3">
@@ -22,3 +16,24 @@ definePageMeta({
         </v-container>
     </div>
 </template>
+
+
+<script setup lang="ts">
+import { onMounted } from 'vue';
+import { useUserStore } from '~/stores/modules/user';
+
+/*-For Set Blank Layout-*/
+definePageMeta({
+  layout: "blank",
+});
+
+const userStore = useUserStore();
+
+// Check if user is already logged in, redirect if needed
+onMounted(() => {
+  if (userStore.isAuthenticated) {
+    // If user is already authenticated, redirect to dashboard or home
+    navigateTo('/');
+  }
+});
+</script>

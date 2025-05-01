@@ -13,8 +13,8 @@ A modern dashboard UI built with Nuxt.js and Vuetify, featuring a clean, respons
 1. Create a `.env` file in the project root
    ```bash
    # Create .env file with required configuration
-   FRONTEND_CONTAINER_NAME=modernize_nuxt_frontend
-   FRONTEND_PORT=3000
+   FRONTEND_CONTAINER_NAME=fses_frontend
+   FRONTEND_PORT=8001
    API_BASE_URL=http://localhost:8080/api
    ```
 

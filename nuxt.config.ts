@@ -16,6 +16,10 @@ export default defineNuxtConfig({
     },
   },
 
+  modules: [
+    '@pinia/nuxt',
+  ],
+
   nitro: {
     serveStatic: true,
   },
@@ -45,6 +49,15 @@ export default defineNuxtConfig({
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
       ]
     },
+  },
+
+  pinia: {
+    autoImports: [
+      // automatically imports `defineStore`
+      'defineStore',
+      // automatically imports `defineStore` as `definePiniaStore`
+      ['defineStore', 'definePiniaStore'],
+    ],
   },
 
   // Development server options

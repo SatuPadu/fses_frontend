@@ -60,6 +60,7 @@ import {
   TicketIcon,
   TypographyIcon,
   UserCircleIcon,
+  UserIcon,
   UserPlusIcon,
   UserShieldIcon,
   ZoomCodeIcon,
