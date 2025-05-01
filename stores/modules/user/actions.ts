@@ -26,7 +26,7 @@ export const actions: UserActions = {
       this.isAuthenticated = true;
       this.token = token;
       
-      return { success: true, user };
+      return { success: true, user, token };
     } catch (error) {
       this.error = 'Failed to login. Please check your credentials.';
       console.error(error);

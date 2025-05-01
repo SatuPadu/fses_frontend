@@ -19,6 +19,7 @@
     "@mdi/font": "7.4.47",
     "@nuxt/vite-builder": "3.16.2",
     "@pinia/nuxt": "^0.11.0",
+    "@vueuse/core": "^13.1.0",
     "apexcharts": "4.5.0",
     "pinia": "^3.0.2",
     "sass": "1.70.0",

@@ -28,13 +28,12 @@ export default defineNuxtConfig({
 
   // Runtime config for environment variables
   runtimeConfig: {
-    
     // Public config exposed to the client
     public: {
       apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api',
     },
-      // Specify the package manager
-      packageManager: 'yarn',
+    // Specify the package manager
+    packageManager: 'yarn',
   },
 
   // App config
@@ -44,20 +43,12 @@ export default defineNuxtConfig({
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: 'UTM FSES' },],
+        { name: 'description', content: 'UTM FSES' },
+      ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
       ]
     },
-  },
-
-  pinia: {
-    autoImports: [
-      // automatically imports `defineStore`
-      'defineStore',
-      // automatically imports `defineStore` as `definePiniaStore`
-      ['defineStore', 'definePiniaStore'],
-    ],
   },
 
   // Development server options
@@ -66,9 +57,7 @@ export default defineNuxtConfig({
     host: '0.0.0.0'
   },
 
-  hooks: {
-  },
+  hooks: {},
 
   compatibilityDate: "2025-04-15",
-
 })

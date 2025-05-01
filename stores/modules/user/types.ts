@@ -18,6 +18,7 @@ export interface User {
     success: boolean;
     user?: User;
     error?: string;
+    token?: string;
   }
   
   export interface LogoutResponse {
