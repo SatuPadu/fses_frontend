@@ -1,8 +1,9 @@
 services:
-  frontend:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
+    image: fses_frontend
     container_name: ${FRONTEND_CONTAINER_NAME:-fses_frontend}
     volumes:
       - .:/app
