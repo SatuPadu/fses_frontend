@@ -1,39 +1,42 @@
 <template>
     <div class="authentication">
-        <v-container fluid class="pa-3">
-            <v-row class="h-100vh d-flex justify-center align-center">
-                <v-col cols="12" lg="4" xl="3" class="d-flex align-center">
-                    <v-card rounded="md" elevation="10" class="px-sm-1 px-0 withbg mx-auto" max-width="500">
-                        <v-card-item class="pa-sm-8">
-                            <div class="d-flex justify-center py-4">
-                                <LayoutFullLogoDark />
-                            </div>
-                            <AuthLoginForm />
-                        </v-card-item>
-                    </v-card>
-                </v-col>
-            </v-row>
-        </v-container>
+      <v-container fluid class="pa-3">
+        <v-row class="h-100vh d-flex justify-center align-center">
+          <v-col cols="12" lg="4" xl="3" class="d-flex align-center">
+            <v-card rounded="md" elevation="10" class="px-sm-1 px-0 withbg mx-auto" max-width="500">
+              <v-card-item class="pa-sm-8">
+                <div class="d-flex justify-center py-4">
+                  <LayoutFullLogoDark />
+                </div>
+                <AuthLoginForm />
+              </v-card-item>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-container>
     </div>
-</template>
-
-
-<script setup lang="ts">
-import { onMounted } from 'vue';
-import { useUserStore } from '~/stores/modules/user';
-
-/*-For Set Blank Layout-*/
-definePageMeta({
-  layout: "blank",
-});
-
-const userStore = useUserStore();
-
-// Check if user is already logged in, redirect if needed
-onMounted(() => {
-  if (userStore.isAuthenticated) {
-    // If user is already authenticated, redirect to dashboard or home
-    navigateTo('/');
-  }
-});
-</script>
+  </template>
+  
+  <script setup lang="ts">
+  import { onMounted } from 'vue';
+  import { useAuth } from '~/composables/auth';
+  import { useRouter } from 'vue-router';
+  
+  /*-For Set Blank Layout-*/
+  definePageMeta({
+    layout: "blank",
+  });
+  
+  const auth = useAuth();
+  const router = useRouter();
+  
+  
+  // Check if user is already logged in, redirect if needed
+  onMounted(() => {
+    if (auth.isAuthenticated) {
+      // If user is already authenticated, redirect to dashboard or home
+      router.push('/');
+    }
+  });
+  </script>
+  

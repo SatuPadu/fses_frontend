@@ -1,18 +1,3 @@
-<script setup lang="ts">
-
-const title = ref(
-  "UTM FSES"
-);
-useHead({
-  meta: [{ content: title }],
-  titleTemplate: (titleChunk) => {
-    return titleChunk
-      ? `${titleChunk}`
-      : "UTM FSES";
-  },
-});
-</script>
-
 <template>
   <v-locale-provider>
     <v-app>
@@ -27,3 +12,18 @@ useHead({
     </v-app>
   </v-locale-provider>
 </template>
+
+<script setup lang="ts">
+
+const title = ref(
+  "UTM FSES"
+);
+useHead({
+  meta: [{ content: title }],
+  titleTemplate: (titleChunk) => {
+    return titleChunk
+      ? `${titleChunk}`
+      : "UTM FSES";
+  },
+});
+</script>

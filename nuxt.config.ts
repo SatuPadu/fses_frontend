@@ -13,6 +13,7 @@ export default defineNuxtConfig({
   vite: {
     define: {
       "process.env.DEBUG": false,
+      'import.meta.env.API_BASE_URL': JSON.stringify(process.env.PI_BASE_URL || 'http://localhost:8080/api'),
     },
   },
 
