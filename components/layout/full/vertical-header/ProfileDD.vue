@@ -20,6 +20,7 @@
             v-if="item.to"
             :to="item.to" 
             class="text-decoration-none"
+            style="color: inherit;"
           >
             <v-list-item 
               :value="item.value" 
