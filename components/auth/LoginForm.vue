@@ -8,6 +8,7 @@
         hide-details
         color="primary"
         :disabled="loading"
+        placeholder="Email or Staff Number"
       ></v-text-field>
     </v-col>
     <v-col cols="12">
@@ -20,6 +21,7 @@
         color="primary"
         :disabled="loading"
         @keyup.enter="handleLogin"
+        placeholder="Enter password"
       ></v-text-field>
     </v-col>
 
@@ -38,7 +40,7 @@
       <div class="d-flex flex-wrap align-center ml-n2">
         <div class="ml-sm-auto">
           <NuxtLink
-            to="/forgot-password"
+            to="/auth/forgot-password"
             class="text-primary text-decoration-none text-body-1 opacity-1 font-weight-medium"
           >
             Forgot Password ?
@@ -61,59 +63,44 @@
   </v-row>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { useAuth } from '~/composables/auth';
+import { useAuth } from '@/composables/useAuth';
+import type { LoginCredentials } from '@/types/auth';
 
-export default {
-  name: 'LoginForm',
+const auth = useAuth();
 
-  setup() {
-    const auth = useAuth();
-    const router = useRouter();
+const formData = reactive<LoginCredentials>({
+  identity: '',
+  password: '',
+});
 
-    const formData = reactive({
-      identity: '',
-      password: '',
-    });
+const error = ref('');
+const loading = ref(false);
 
-    const error = ref('');
-    const loading = ref(false);
+const handleLogin = async () => {
+  // Form validation
+  if (!formData.identity || !formData.password) {
+    error.value = 'Please enter both username and password';
+    return;
+  }
 
-    const handleLogin = async () => {
-      if (!formData.identity || !formData.password) {
-        error.value = 'Please enter both username and password';
-        return;
-      }
+  loading.value = true;
+  error.value = '';
 
-      loading.value = true;
-
-      try {
-        const success = await auth.login(formData);
-
-        if (success) {
-          // Navigate to dashboard or home
-          router.push('/');
-        } else {
-          error.value = 'Invalid username or password';
-        }
-      } catch (err) {
-        console.error('Login error:', err);
-        error.value = 'An unexpected error occurred. Please try again.';
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    return {
-      auth,
-      router,
-      formData,
-      error,
-      loading,
-      handleLogin,
-    };
-  },
+  try {
+    // Use the loginAndRedirect method which handles all redirection logic
+    const success = await auth.loginAndRedirect(formData);
+    
+    if (!success) {
+      error.value = 'Invalid credentials. Please check your username and password.';
+    }
+    // No need for manual redirection as it's handled in loginAndRedirect
+  } catch (err: any) {
+    console.error('Login error:', err);
+    error.value = err?.message || 'An unexpected error occurred. Please try again.';
+  } finally {
+    loading.value = false;
+  }
 };
 </script>

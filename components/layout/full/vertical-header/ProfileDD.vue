@@ -80,7 +80,7 @@
 
 <script>
 import { UserIcon, MailIcon, ListCheckIcon, LogoutIcon } from 'vue-tabler-icons';
-import { useAuth } from '~/composables/auth';
+import { useAuth } from '@/composables/useAuth';
 
 export default {
   name: 'UserProfileDropdown',
@@ -134,7 +134,7 @@ export default {
   methods: {
     async handleLogout() {
       try {
-        await this.auth.logout();
+        await this.auth.logoutAndRedirect();
       } catch (error) {
         console.error('Error during logout:', error);
       }

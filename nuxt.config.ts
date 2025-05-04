@@ -1,19 +1,27 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import tailwindcss from "@tailwindcss/vite";
+
 export default defineNuxtConfig({
   ssr: false,
 
   typescript: {
-    shim: false
+    shim: false,
+    strict: true
   },
 
   build: {
     transpile: ["vuetify"],
   },
 
+  css: ['~/assets/css/main.css'],
+
   vite: {
+    plugins: [
+      tailwindcss(),
+    ],
     define: {
       "process.env.DEBUG": false,
-      'import.meta.env.API_BASE_URL': JSON.stringify(process.env.PI_BASE_URL || 'http://localhost:8080/api'),
+      'import.meta.env.API_BASE_URL': JSON.stringify(process.env.API_BASE_URL || 'http://localhost:8080/api'),
     },
   },
 
@@ -57,8 +65,5 @@ export default defineNuxtConfig({
     port: 8001,
     host: '0.0.0.0'
   },
-
-  hooks: {},
-
   compatibilityDate: "2025-04-15",
 })

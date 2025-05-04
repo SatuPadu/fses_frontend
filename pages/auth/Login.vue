@@ -17,26 +17,8 @@
     </div>
   </template>
   
-  <script setup lang="ts">
-  import { onMounted } from 'vue';
-  import { useAuth } from '~/composables/auth';
-  import { useRouter } from 'vue-router';
-  
-  /*-For Set Blank Layout-*/
+  <script lang="ts">
   definePageMeta({
     layout: "blank",
   });
-  
-  const auth = useAuth();
-  const router = useRouter();
-  
-  
-  // Check if user is already logged in, redirect if needed
-  onMounted(() => {
-    if (auth.isAuthenticated) {
-      // If user is already authenticated, redirect to dashboard or home
-      router.push('/');
-    }
-  });
   </script>
-  

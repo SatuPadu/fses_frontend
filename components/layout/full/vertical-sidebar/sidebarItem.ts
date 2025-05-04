@@ -133,14 +133,6 @@ const sidebarItem: menu[] = [
     icon: TableIcon,
     to: "/ui-components/tables",
   },
-
-  { header: "auth" },
-  {
-    title: "Login",
-    icon: LoginIcon,
-    to: "/auth/login",
-    external: false,
-  },
   { header: "Extra" },
   {
     title: "Icons",

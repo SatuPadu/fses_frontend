@@ -1,19 +1,18 @@
 <template>
-  <v-card class="mx-auto rounded-4 hidden" elevation="0">
-    <v-card-text class="pa-6">
-      <div class="d-flex flex-column align-center mb-4">
+  <v-card class="mx-auto rounded-lg" elevation="0">
+    <v-card-text class="p-6">
+      <div class="flex flex-col mb-4">
         <v-avatar
           color="primary"
           size="120"
-          class="mb-4 elevation-3"
+          class="mb-4 shadow-md"
         >
-          <img v-if="user?.avatar" :src="user.avatar" alt="User avatar" />
-          <span v-else class="text-h1 font-weight-bold text-white">{{ userInitials }}</span>
+          <span class="text-4xl font-bold text-white">{{ userInitials }}</span>
         </v-avatar>
 
-        <div class="text-center">
-          <h2 class="text-h5 font-weight-bold mb-1">{{ userName }}</h2>
-          <div class="d-flex justify-center align-center">
+        <div class="">
+          <h2 class="text-xl font-bold mb-1">{{ userName }}</h2>
+          <div class="flex">
             <v-chip
               :color="chipColor"
               label
@@ -27,55 +26,72 @@
       </div>
 
       <v-divider class="mb-4"></v-divider>
-
-      <v-list class="bg-transparent pa-0">
-        <v-list-item>
-          <v-list-item-title class="text-subtitle-1 font-weight-bold mb-1">User ID</v-list-item-title>
-          <v-list-item-subtitle class="text-body-2">{{ user?.staff_number || '' }}</v-list-item-subtitle>
-        </v-list-item>
-        <v-list-item>
-          <v-list-item-title class="text-subtitle-1 font-weight-bold mb-1">Account Type</v-list-item-title>
-          <v-list-item-subtitle class="text-body-2">{{ isAdmin ? 'Administrator' : 'Standard User' }}</v-list-item-subtitle>
-        </v-list-item>
-      </v-list>
+      
+      <div class="space-y-2 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-4">
+        <div class="flex items-center space-x-2 pa-4">
+          <div class="font-semibold text-gray-600 mr-4">User ID:</div>
+          <div class="text-gray-900">{{ user?.staff_number || '' }}</div>
+        </div>
+        <div class="flex items-center space-x-2 pa-4">
+          <div class="font-semibold text-gray-600 mr-4">Department:</div>
+          <div class="text-gray-900">{{ user?.department || 'Not specified' }}</div>
+        </div>
+        <div class="flex items-center space-x-2 pa-4">
+          <div class="font-semibold text-gray-600 mr-4">Email:</div>
+          <div class="text-gray-900">{{ user?.email || '' }}</div>
+        </div>
+        <div class="flex items-center space-x-2 pa-4">
+          <div class="font-semibold text-gray-600 mr-4">Last Login:</div>
+          <div class="text-gray-900">{{ formatDate(user?.last_login) }}</div>
+        </div>
+      </div>
     </v-card-text>
   </v-card>
 </template>
 
-<script lang="ts">
-import type { PropType } from 'vue';
-import type { User } from '~/types/auth';
+<script setup lang="ts">
+import { computed } from 'vue';
+import type { User } from '@/types/auth';
 
-export default {
-  name: 'UserProfile',
-
-  props: {
-    user: {
-      type: Object as PropType<User | null>,
-      default: null,
-    },
-    isAdmin: {
-      type: Boolean,
-      default: false,
-    },
-    roleName: {
-      type: String,
-      default: 'Standard User',
-    },
-    userInitials: {
-      type: String,
-      default: '',
-    },
+// Define props with TypeScript interface
+const props = defineProps({
+  user: {
+    type: Object as PropType<User | null>,
+    default: null,
   },
-
-  computed: {
-    userName(): string {
-      return this.user?.name || '';
-    },
-
-    chipColor(): string {
-      return this.isAdmin ? 'error' : 'primary';
-    },
+  isAdmin: {
+    type: Boolean,
+    default: false,
   },
+  roleName: {
+    type: String,
+    default: 'Standard User',
+  },
+  userInitials: {
+    type: String,
+    default: '',
+  },
+});
+
+// Computed properties
+const userName = computed(() => props.user?.name || '');
+const chipColor = computed(() => props.isAdmin ? 'error' : 'primary');
+
+// Helper function to format date
+const formatDate = (dateString: string | undefined | null): string => {
+  if (!dateString) return 'Never';
+  
+  try {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  } catch (e) {
+    return 'Invalid date';
+  }
 };
 </script>

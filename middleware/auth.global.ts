@@ -1,41 +1,47 @@
 // middleware/auth.global.ts
-import { useAuth } from '~/composables/auth';
+import { defineNuxtRouteMiddleware, navigateTo } from 'nuxt/app';
+import { useAuthStore } from '@/composables/useAuth';
 
-export default defineNuxtRouteMiddleware(async (to, from) => {
-  const auth = useAuth();
-  const publicRoutes = ['/auth/login', '/auth/forgot-password', '/auth/register'];
-  const isPublicRoute = publicRoutes.includes(to.path);
-
-  // Redirect to login if not authenticated and trying to access protected route
-  if (!isPublicRoute && !auth.isAuthenticated) {
+export default defineNuxtRouteMiddleware((to) => {
+  // Skip middleware in server-side rendering
+  if (process.server) return;
+  
+  const authStore = useAuthStore();
+  
+  // Public routes that don't require authentication
+  const publicRoutes = ['/auth/login', '/auth/forgot-password', '/auth/reset-password'];
+  
+  // If route is public, allow access without auth
+  if (publicRoutes.includes(to.path)) {
+    // But if user is already authenticated, redirect to home or password change page
+    if (authStore.isAuthenticated) {
+      if (authStore.needsPasswordChange) {
+        return navigateTo('/auth/set-new-password');
+      } else {
+        return navigateTo('/');
+      }
+    }
+    return; // Allow access to public route for unauthenticated users
+  }
+  
+  // Special handling for set-new-password route
+  if (to.path === '/auth/set-new-password') {
+    // Must be authenticated to access this route
+    if (!authStore.isAuthenticated) {
+      return navigateTo('/auth/login');
+    }
+    // If password is already updated and trying to access set-new-password,
+    // redirect to home (this is for voluntary password changes)
+    return;
+  }
+  
+  // For all other routes, require authentication
+  if (!authStore.isAuthenticated) {
     return navigateTo('/auth/login');
   }
-
-  // Role-based access control
-  if (to.meta.roles && auth.user) {
-    const requiredRoles = Array.isArray(to.meta.roles) ? to.meta.roles : [to.meta.roles];
-    const userRoles = auth.roles.map(role => role.role_name);
-    const hasRequiredRole = requiredRoles.some(role => userRoles.includes(role));
-    
-    if (!hasRequiredRole) {
-      return navigateTo('/unauthorized');
-    }
-  }
-
-  // Permission-based access control
-  if (to.meta.permissions && auth.user) {
-    const requiredPermissions = Array.isArray(to.meta.permissions) ? to.meta.permissions : [to.meta.permissions];
-    const userPermissions = auth.roles.reduce((acc: string[], role) => {
-      Object.values(role.permissions).forEach(perms => {
-        acc.push(...perms);
-      });
-      return acc;
-    }, []);
-
-    const hasRequiredPermission = requiredPermissions.some(permission => userPermissions.includes(permission));
-    
-    if (!hasRequiredPermission) {
-      return navigateTo('/unauthorized');
-    }
+  
+  // If authenticated but password needs to be changed, redirect to set-new-password
+  if (authStore.needsPasswordChange && to.path !== '/auth/set-new-password') {
+    return navigateTo('/auth/set-new-password');
   }
 });

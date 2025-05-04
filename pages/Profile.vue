@@ -3,7 +3,7 @@
     <v-col cols="12" sm="12" lg="12">
       <UiChildCard title="User Profile">
         <UserProfile
-          :user="authStore.user"
+          :user="auth.user"
           :isAdmin="isAdmin"
           :roleName="roleName"
           :userInitials="userInitials"
@@ -13,46 +13,35 @@
   </v-row>
 </template>
 
-<script lang="ts">
-import { useAuthStore } from '~/composables/auth';
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useAuth } from '@/composables/useAuth';
 import UiChildCard from '@/components/shared/UiChildCard.vue';
 import UserProfile from '@/components/auth/UserProfile.vue';
 
-export default {
-  name: 'UserProfileParent',
+// Get auth store from composable
+const auth = useAuth();
 
-  components: {
-    UiChildCard,
-    UserProfile,
-  },
+// Computed properties
+const isAdmin = computed(() => {
+  return auth.roles.some(role => role.role_name === 'Administrator');
+});
 
-  setup() {
-    const authStore = useAuthStore();
-    return { authStore };
-  },
+const roleName = computed(() => {
+  let role = 'Standard User';
+  if (auth.roles && auth.roles.length > 0) {
+    role = auth.roles[0].role_name;
+  }
+  return role;
+});
 
-  computed: {
-    isAdmin() {
-      return this.authStore.roles.some(role => role.role_name === 'Administrator');
-    },
-
-    roleName() {
-      let role = 'Standard User';
-      if (this.authStore.roles && this.authStore.roles.length > 0) {
-        role = this.authStore.roles[0].role_name;
-      }
-      return role;
-    },
-
-    userInitials() {
-      const name = this.authStore.user?.name;
-      if (!name) return '';
-      return name
-        .split(' ')
-        .map(part => part.charAt(0).toUpperCase())
-        .slice(0, 2)
-        .join('');
-    },
-  },
-};
+const userInitials = computed(() => {
+  const name = auth.user?.name;
+  if (!name) return '';
+  return name
+    .split(' ')
+    .map(part => part.charAt(0).toUpperCase())
+    .slice(0, 2)
+    .join('');
+});
 </script>
