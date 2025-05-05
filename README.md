@@ -20,7 +20,7 @@ A modern dashboard UI built with Nuxt.js and Vuetify, featuring a clean, respons
 
 2. Start the Docker container
    ```bash
-   docker-compose up
+   docker compose up
    ```
 
 3. Access the application at: http://localhost:8001
