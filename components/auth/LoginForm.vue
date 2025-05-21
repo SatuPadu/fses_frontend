@@ -8,7 +8,7 @@
         hide-details
         color="primary"
         :disabled="loading"
-        placeholder="Email or Staff Number"
+        placeholder="Enter your staff number"
       ></v-text-field>
     </v-col>
     <v-col cols="12">
@@ -21,7 +21,7 @@
         color="primary"
         :disabled="loading"
         @keyup.enter="handleLogin"
-        placeholder="Enter password"
+        placeholder="Enter your password"
       ></v-text-field>
     </v-col>
 
@@ -37,18 +37,6 @@
     </v-col>
 
     <v-col cols="12" class="pt-0">
-      <div class="d-flex flex-wrap align-center ml-n2">
-        <div class="ml-sm-auto">
-          <NuxtLink
-            to="/auth/forgot-password"
-            class="text-primary text-decoration-none text-body-1 opacity-1 font-weight-medium"
-          >
-            Forgot Password ?
-          </NuxtLink>
-        </div>
-      </div>
-    </v-col>
-    <v-col cols="12" class="pt-0">
       <v-btn
         color="primary"
         size="large"
@@ -60,15 +48,24 @@
         Sign in
       </v-btn>
     </v-col>
+    <v-col cols="12" class="pt-2">
+      <div class="d-flex justify-end">
+        <NuxtLink
+          to="/auth/forgot-password"
+          class="text-primary text-decoration-none text-body-2"
+        >
+          Forgot Password?
+        </NuxtLink>
+      </div>
+    </v-col>
   </v-row>
 </template>
-
 <script setup lang="ts">
-import { reactive, ref } from 'vue';
-import { useAuth } from '@/composables/useAuth';
-import type { LoginCredentials } from '@/types/auth';
+import { reactive, ref } from 'vue'
+import { useAuth } from '~/composables/useAuth'
+import type { LoginCredentials } from '~/types/auth'
 
-const auth = useAuth();
+const auth = useAuth()
 
 const formData = reactive<LoginCredentials>({
   identity: '',
