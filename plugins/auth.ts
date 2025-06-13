@@ -67,11 +67,9 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       } catch (error: any) {
         // Handle 401 Unauthorized errors
         if (error.response?.status === 401 && authStore.isAuthenticated) {
-          console.log('AuthFetch: Unauthorized - Attempting token refresh');
           const refreshed = await authStore.refreshToken();
 
           if (refreshed) {
-            console.log('AuthFetch: Token refreshed successfully - Retrying request');
             // Retry with new token
             options.headers = {
               ...options.headers,
@@ -79,7 +77,6 @@ export default defineNuxtPlugin(async (nuxtApp) => {
             };
             return await $fetch(url, options);
           } else {
-            console.log('AuthFetch: Token refresh failed - Logging out');
             const auth = useAuth();
             await auth.logoutAndRedirect();
           }

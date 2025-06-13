@@ -79,12 +79,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuth } from '@/composables/useAuth'
 
 definePageMeta({
   layout: "blank",
 });
 
 const router = useRouter()
+const auth = useAuth()
 const form = ref()
 const email = ref('')
 const error = ref('')
@@ -105,10 +107,13 @@ const handleSubmit = async () => {
   error.value = ''
 
   try {
-    // TODO: Implement actual API call here
-    // For now, we'll simulate a successful response
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    router.push('/auth/forgot-password-email-sent')
+    const result = await auth.sendResetLink(email.value)
+    
+    if (result.success) {
+      router.push('/auth/forgot-password-email-sent')
+    } else {
+      error.value = result.error || 'Failed to send reset link. Please try again.'
+    }
   } catch (err: any) {
     error.value = err?.message || 'An error occurred. Please try again.'
   } finally {

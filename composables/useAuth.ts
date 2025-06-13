@@ -352,6 +352,78 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+  const resetPassword = async (payload: PasswordChangePayload) => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const { data, error: apiError } = await useFetch<ApiResponse<{ message: string }>>(
+        `${import.meta.env.API_BASE_URL}/password/reset`,
+        {
+          method: 'POST',
+          body: payload,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (apiError.value) {
+        throw new Error(apiError.value.message || 'Failed to reset password');
+      }
+
+      if (data.value && data.value.success) {
+        return { success: true, message: data.value.message };
+      }
+
+      return {
+        success: false,
+        error: data.value?.message || 'Failed to reset password',
+      };
+    } catch (err: any) {
+      error.value = err.message || 'Failed to reset password';
+      return { success: false, error: error.value };
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const sendResetLink = async (email: string) => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const { data, error: apiError } = await useFetch<ApiResponse<{ message: string }>>(
+        `${import.meta.env.API_BASE_URL}/password/reset-link`,
+        {
+          method: 'POST',
+          body: { email },
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (apiError.value) {
+        throw new Error(apiError.value.message || 'Failed to send reset link');
+      }
+
+      if (data.value && data.value.success) {
+        return { success: true, message: data.value.message };
+      }
+
+      return {
+        success: false,
+        error: data.value?.message || 'Failed to send reset link',
+      };
+    } catch (err: any) {
+      error.value = err.message || 'Failed to send reset link';
+      return { success: false, error: error.value };
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const initAuth = async () => {
     // State is already initialized from localStorage via initialState
     // Just verify the token is still valid by fetching the user profile
@@ -421,6 +493,8 @@ export const useAuthStore = defineStore('auth', () => {
     fetchUserProfile,
     changePassword,
     refreshToken,
+    resetPassword,
+    sendResetLink,
     initAuth,
 
     // Permission helpers

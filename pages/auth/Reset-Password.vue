@@ -12,16 +12,16 @@
             <v-card-text>
               <v-row class="d-flex mb-3">
                 <v-col cols="12" class="mb-4">
-                  <h2 class="text-h4 text-center font-weight-bold">Set New Password</h2>
+                  <h2 class="text-h4 text-center font-weight-bold">Reset Password</h2>
 
-                  <div v-if="auth.needsPasswordChange" class="mt-4">
+                  <div class="mt-4">
                     <v-alert
                       type="info"
                       variant="tonal"
                       density="compact"
                       class="mb-4"
                     >
-                      You need to set a new password before continuing
+                      Please enter your new password below
                     </v-alert>
                   </div>
                 </v-col>
@@ -90,7 +90,7 @@
                     :disabled="!isFormValid"
                     @click="handleSetPassword"
                   >
-                    Set New Password
+                    Reset Password
                   </v-btn>
                 </v-col>
 
@@ -99,7 +99,7 @@
                     variant="text"
                     color="primary"
                     block
-                    @click="router.back()"
+                    @click="router.push('/auth/login')"
                   >
                     Cancel
                   </v-btn>
@@ -118,17 +118,22 @@ definePageMeta({
   layout: 'blank',
 });
 
-import { reactive, computed } from 'vue';
+import { reactive, computed, onMounted } from 'vue';
 import { useAuth } from '@/composables/useAuth';
 import type { PasswordChangePayload } from '@/types/auth';
 
 const auth = useAuth();
 const router = useRouter();
+const route = useRoute();
+
+// Get token from route query
+const token = computed(() => route.query.token as string);
 
 // Form data with reactive object
 const formData = reactive<PasswordChangePayload>({
   password: '',
   password_confirmation: '',
+  token: '',
 });
 
 // State management for UI
@@ -136,6 +141,16 @@ const state = reactive({
   errorMessage: '',
   successMessage: '',
   loading: false,
+  tokenValid: true,
+});
+
+// Check token validity on mount
+onMounted(() => {
+  if (!token.value) {
+    state.tokenValid = false;
+    state.errorMessage = 'Invalid or missing reset token. Please request a new password reset link.';
+  }
+  formData.token = token.value;
 });
 
 // Alphanumeric password validation regex
@@ -176,8 +191,13 @@ const isFormValid = computed(() => {
   return validation.valid;
 });
 
-// Single method to handle password change
+// Single method to handle password reset
 const handleSetPassword = async () => {
+  if (!state.tokenValid) {
+    state.errorMessage = 'Invalid or missing reset token. Please request a new password reset link.';
+    return;
+  }
+
   // Comprehensive validation
   const validation = validatePassword(
     formData.password,
@@ -196,16 +216,34 @@ const handleSetPassword = async () => {
   state.loading = true;
 
   try {
-    // Use composable method for password change
-    const result = await auth.changePasswordAndRedirect(formData);
+    // Use composable method for password reset
+    const result = await auth.resetPassword(formData);
 
-    if (!result) {
-      state.errorMessage = 'Failed to set new password. Please try again.';
+    if (result.success) {
+      // Success scenario
+      state.successMessage = 'Password reset successfully! Redirecting to login...';
+      
+      // Optional: Clear sensitive data
+      formData.password = '';
+      formData.password_confirmation = '';
+      
+      // Redirect to login after a short delay
+      setTimeout(() => {
+        router.push('/auth/login');
+      }, 2000);
+    } else {
+      // Failed scenario
+      state.errorMessage = 'Failed to reset password. Please try again.';
     }
   } catch (err: any) {
     // Error handling
-    console.error('Password change error:', err);
+    console.error('Password reset error:', err);
     state.errorMessage = err?.message || 'An unexpected error occurred.';
+    
+    // Handle specific token-related errors
+    if (err?.message?.toLowerCase().includes('token')) {
+      state.tokenValid = false;
+    }
   } finally {
     // Always reset loading state
     state.loading = false;
