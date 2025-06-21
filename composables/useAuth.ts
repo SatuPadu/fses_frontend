@@ -141,7 +141,7 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = responseData.user;
 
         // Parse and store roles
-        roles.value = responseData.roles.map((role) => {
+        roles.value = responseData?.roles?.map((role: any) => {
           // Ensure role permissions are correctly handled whether they're a string or object
           if (typeof role.permissions === 'string' && role.permissions) {
             try {
@@ -511,6 +511,7 @@ export function useAuth() {
 
   const loginAndRedirect = async (credentials: LoginCredentials) => {
     const result = await authStore.login(credentials);
+    console.log(result);
 
     if (result.success) {
       if (authStore.needsPasswordChange) {
