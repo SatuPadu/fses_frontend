@@ -20,6 +20,16 @@ export default defineNuxtPlugin((nuxtApp) => {
         PurpleTheme,
       },
     },
+    icons: {
+      defaultSet: 'mdi',
+      sets: {
+        mdi: {
+          icon: 'mdi',
+          sizes: ['mdi-18px', 'mdi-24px', 'mdi-36px', 'mdi-48px', 'mdi-64px'],
+        },
+      },
+    },
+  
   });
   nuxtApp.vueApp.use(vuetify);
   nuxtApp.vueApp.use(PerfectScrollbar);

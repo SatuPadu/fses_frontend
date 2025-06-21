@@ -54,7 +54,6 @@
           to="/auth/forgot-password"
           class="text-primary text-decoration-none text-body-2"
         >
-          Forgot Password?
         </NuxtLink>
       </div>
     </v-col>
