@@ -1,7 +1,7 @@
 <template>
   <v-row>
     <v-col cols="12" md="12">
-      <h1>User Management</h1>
+      <h1>Student Management</h1>
       <!-- Action Buttons -->
       <div class="d-flex justify-end mb-4 mt-4 gap-2">
         <v-btn 
@@ -10,56 +10,47 @@
           variant="flat" 
           :prepend-icon="PlusIcon"
         >
-          Add User
+          Add Student
         </v-btn>
       </div>
 
       <!-- Filters -->
-      <UserFilters @filters-updated="handleFiltersUpdated" />
+      <StudentFilters @filters-updated="handleFiltersUpdated" />
 
-      <!-- Users Table -->
+      <!-- Students Table -->
       <UiParentCard class="mt-4" :showTitle="false">
-        <UsersTable
-          :users="users"
+        <StudentsTable
+          :students="students"
           :loading="loading"
           :total-items="pagination.totalItems"
           :items-per-page="pagination.itemsPerPage"
           :page="pagination.page"
           @update-options="handleOptionsUpdate"
-          @edit-user="handleEditUser"
-          @delete-user="handleDeleteUser"
-          @page-changed="handlePageChange"
+          @edit-student="handleEditStudent"
+          @delete-student="handleDeleteStudent"
           @items-per-page-changed="handleItemsPerPageChange"
-          @show-details="handleShowDetails"
         />
       </UiParentCard>
     </v-col>
   </v-row>
 
   <!-- Dialogs -->
-
-  <AddUserForm
+  <AddStudentForm
     :dialog="showAddFormDialog"
     @toggle-dialog="showAddFormDialog = false"
-    @user-added="handleUserAdded"
+    @student-added="handleStudentAdded"
   />
-  <UpdateUserForm
-    v-if="selectedUser"
+  <UpdateStudentForm
+    v-if="selectedStudent"
     :dialog="showUpdateFormDialog"
-    :user-info="selectedUser"
+    :student-info="selectedStudent"
     @toggle-dialog="showUpdateFormDialog = false"
-    @user-updated="handleUserUpdated"
-  />
-  <UserDetailsModal
-    v-if="selectedUser"
-    :dialog="showDetailsDialog"
-    :user="selectedUser"
-    @toggle-dialog="showDetailsDialog = false"
+    @student-updated="handleStudentUpdated"
   />
   <v-dialog v-model="showDeleteDialog" max-width="400">
     <v-card
       title="Confirm Deletion"
-      text="Are you sure you want to remove this user? This action cannot be undone."
+      text="Are you sure you want to remove this student? This action cannot be undone."
     >
       <template v-slot:prepend>
         <v-icon :icon="ExclamationCircleIcon" color="error"></v-icon>
@@ -70,24 +61,23 @@
           color="error"
           text="Delete"
           :loading="loading"
-          @click="confirmDeleteUser"
+          @click="confirmDeleteStudent"
         ></v-btn>
         <v-btn text="Cancel" @click="showDeleteDialog = false"></v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
-</template>
+</template> 
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import UiParentCard from '~/components/shared/UiParentCard.vue';
-import UserFilters from '~/components/users/UserFilters.vue';
-import UsersTable from '~/components/users/UsersTable.vue';
-import AddUserForm from '~/components/users/AddUserForm.vue';
-import UpdateUserForm from '~/components/users/UpdateUserForm.vue';
-import UserDetailsModal from '~/components/users/UserDetailsModal.vue';
+import StudentFilters from '~/components/students/StudentFilters.vue';
+import StudentsTable from '~/components/students/StudentsTable.vue';
+import AddStudentForm from '~/components/students/AddStudentForm.vue';
+import UpdateStudentForm from '~/components/students/UpdateStudentForm.vue';
 import { useUserManagement } from '~/composables/useUserManagement';
-import type { User } from '~/types/global';
+import type { Student } from '~/types/global';
 import { PlusIcon, ExclamationCircleIcon } from 'vue-tabler-icons';
 
 const userManagement = useUserManagement();
@@ -96,11 +86,10 @@ const userManagement = useUserManagement();
 const showAddFormDialog = ref(false);
 const showUpdateFormDialog = ref(false);
 const showDeleteDialog = ref(false);
-const showDetailsDialog = ref(false);
 
-// User data and state
-const users = ref<User[]>([]);
-const selectedUser = ref<User | null>(null);
+// Student data and state
+const students = ref<Student[]>([]);
+const selectedStudent = ref<Student | null>(null);
 const loading = ref(false);
 const activeFilters = ref({});
 
@@ -112,25 +101,36 @@ const pagination = reactive({
   sortBy: [{ key: 'name', order: 'desc' }],
 });
 
-// Fetch users from API
-const fetchUsers = async () => {
+// Fetch students from API
+const fetchStudents = async () => {
   loading.value = true;
   try {
-    // Call the getUsers API with the correct parameters
-    const response = await userManagement.getUsers({
+    const filters: Record<string, any> = {};
+    for (const [key, value] of Object.entries(activeFilters.value)) {
+      if (value) {
+        filters[key] = value;
+      }
+    }
+
+    // Handle per_page from filters
+    if (filters.per_page) {
+      pagination.itemsPerPage = filters.per_page;
+      delete filters.per_page; // Remove from API filters
+    }
+
+    const response = await userManagement.getStudents({
       page: pagination.page,
       perPage: pagination.itemsPerPage,
       sortBy: pagination.sortBy.length ? pagination.sortBy[0].key : 'name',
       sortOrder: pagination.sortBy.length ? pagination.sortBy[0].order : 'desc',
-      filters: activeFilters.value
+      filters
     });
 
-    // Update the users and pagination
-    users.value = response.data.items || [];
+    students.value = response.data.items || [];
     pagination.totalItems = response.data.pagination?.total || 0;
 
   } catch (error) {
-    console.error('Error fetching users:', error);
+    console.error('Error fetching students:', error);
   } finally {
     loading.value = false;
   }
@@ -140,69 +140,54 @@ const fetchUsers = async () => {
 const handleFiltersUpdated = (filters: any) => {
   activeFilters.value = filters;
   pagination.page = 1; // Reset to first page
-  fetchUsers();
-};
-
-const handlePageChange = (newPage: number) => {
-  pagination.page = newPage;
-  fetchUsers();
-};
-
-const handleItemsPerPageChange = (newItemsPerPage: number) => {
-  pagination.itemsPerPage = newItemsPerPage;
-  pagination.page = 1; // Reset to first page
-  fetchUsers();
+  fetchStudents();
 };
 
 const handleOptionsUpdate = ({ page, itemsPerPage, sortBy }: any) => {
   pagination.page = page;
   pagination.itemsPerPage = itemsPerPage;
   pagination.sortBy = sortBy;
-  fetchUsers();
+  fetchStudents();
 };
 
-const handleImportComplete = () => {
-  fetchUsers(); // Refresh list after bulk import
+const handleStudentAdded = () => {
+  fetchStudents(); // Refresh list
 };
 
-const handleUserAdded = () => {
-  fetchUsers(); // Refresh list
+const handleStudentUpdated = () => {
+  fetchStudents(); // Refresh list
 };
 
-const handleUserUpdated = () => {
-  fetchUsers(); // Refresh list
-};
-
-const handleEditUser = (user: User) => {
-  selectedUser.value = user;
+const handleEditStudent = (student: Student) => {
+  selectedStudent.value = student;
   showUpdateFormDialog.value = true;
 };
 
-const handleShowDetails = (user: User) => {
-  selectedUser.value = user;
-  showDetailsDialog.value = true;
-};
-
-const handleDeleteUser = (user: User) => {
-  selectedUser.value = user;
+const handleDeleteStudent = (student: Student) => {
+  selectedStudent.value = student;
   showDeleteDialog.value = true;
 };
 
-const confirmDeleteUser = async () => {
-  if (!selectedUser.value) return;
+const confirmDeleteStudent = async () => {
+  if (!selectedStudent.value) return;
   loading.value = true;
   try {
-    await userManagement.deleteUser(selectedUser.value.id.toString());
-    fetchUsers();
+    await userManagement.deleteStudent(selectedStudent.value.id.toString());
+    fetchStudents();
   } catch (error) {
-    console.error('Error deleting user:', error);
+    console.error('Error deleting student:', error);
   } finally {
     showDeleteDialog.value = false;
     loading.value = false;
   }
 };
 
+const handleItemsPerPageChange = (newItemsPerPage: number) => {
+  pagination.itemsPerPage = newItemsPerPage;
+  fetchStudents();
+};
+
 onMounted(() => {
-  fetchUsers();
+  fetchStudents();
 });
 </script>

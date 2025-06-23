@@ -1,11 +1,8 @@
 <template>
-    <v-dialog
-        v-model="dialogModel"
-        max-width="600"
-    >
+    <v-dialog v-model="dialogModel" max-width="600">
         <v-card>
             <v-card-title class="d-flex justify-space-between align-center">
-                <span>Update User</span>
+                <span>Update Lecturer</span>
                 <v-btn icon="mdi-close" variant="text" @click="toggleDialog"></v-btn>
             </v-card-title>
             <v-divider></v-divider>
@@ -14,11 +11,12 @@
                     <v-col cols="12" sm="6">
                         <v-label class="font-weight-bold mb-1">Staff Number</v-label>
                         <v-text-field
-                            :model-value="staffNumber"
+                            v-model="formData.staff_number"
                             density="compact"
                             variant="outlined"
-                            readonly
-                            disabled
+                            :readonly="!isStaffNumberEditable"
+                            :disabled="!isStaffNumberEditable"
+                            :error-messages="formErrors.staff_number"
                         ></v-text-field>
                     </v-col>
                     <v-col cols="12" sm="6">
@@ -103,18 +101,19 @@
                     variant="flat" 
                     :loading="loading"
                 >
-                    Update User
+                    Update Lecturer
                 </v-btn>
                 <v-btn @click="toggleDialog" :disabled="loading">Cancel</v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>
-</template>
+</template> 
+
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { useEnumsStore } from '~/stores/enums';
-import type { User } from '~/types/global';
+import type { Lecturer } from '~/types/global';
 
 const userManagement = useUserManagement();
 const enumsStore = useEnumsStore();
@@ -124,13 +123,13 @@ const props = defineProps({
         type: Boolean,
         default: false
     },
-    userInfo: {
-        type: Object as () => User | null,
+    lecturerInfo: {
+        type: Object as () => Lecturer | null,
         default: null
     }
 });
 
-const emits = defineEmits(['toggle-dialog', 'user-updated']);
+const emits = defineEmits(['toggle-dialog', 'lecturer-updated']);
 
 const dialogModel = computed({
     get() {
@@ -143,6 +142,7 @@ const dialogModel = computed({
 
 // Form data
 const formData = ref({
+    staff_number: '',
     name: '',
     title: null as string | null,
     email: '',
@@ -151,7 +151,6 @@ const formData = ref({
     external_institution: '',
     specialization: '',
 });
-const staffNumber = ref('');
 
 // Form validation
 const formErrors = ref<Record<string, string>>({});
@@ -159,6 +158,11 @@ const loading = ref(false);
 
 const titleItems = computed(() => enumsStore.getTitleOptions());
 const departmentItems = computed(() => enumsStore.getDepartmentOptions());
+
+// Track if staff number was empty when modal opened
+const originalStaffNumber = ref('');
+
+const isStaffNumberEditable = computed(() => !originalStaffNumber.value);
 
 const toggleDialog = () => {
     emits('toggle-dialog');
@@ -177,23 +181,22 @@ const validateForm = () => {
 };
 
 const handleSubmit = async () => {
-    if (!validateForm() || !props.userInfo) {
+    if (!validateForm() || !props.lecturerInfo) {
         return;
     }
 
     loading.value = true;
+    formErrors.value = {};
 
     try {
-        await userManagement.updateUser(props.userInfo.id.toString(), formData.value);
-        
-        emits('user-updated');
-        
+        await userManagement.updateLecturer(props.lecturerInfo.id.toString(), formData.value);
+        emits('lecturer-updated');
         toggleDialog();
     } catch (error: any) {
         if (error.response && error.response.data && error.response.data.errors) {
             formErrors.value = error.response.data.errors;
         } else {
-            console.error('Error updating user:', error);
+            console.error('Error updating lecturer:', error);
         }
     } finally {
         loading.value = false;
@@ -202,6 +205,7 @@ const handleSubmit = async () => {
 
 const resetForm = () => {
     formData.value = {
+        staff_number: '',
         name: '',
         title: null,
         email: '',
@@ -210,28 +214,29 @@ const resetForm = () => {
         external_institution: '',
         specialization: '',
     };
-    staffNumber.value = '';
+    originalStaffNumber.value = '';
     formErrors.value = {};
 };
 
-watch(() => props.userInfo, (newUserInfo) => {
-    if (newUserInfo) {
+watch(() => props.lecturerInfo, (newLecturerInfo) => {
+    if (newLecturerInfo) {
+        originalStaffNumber.value = newLecturerInfo.staff_number || '';
         formData.value = {
-            name: newUserInfo.name,
-            title: newUserInfo.lecturer?.title || null,
-            email: newUserInfo.email,
-            department: newUserInfo.department,
-            phone: newUserInfo.lecturer?.phone || '',
-            external_institution: newUserInfo.lecturer?.external_institution || '',
-            specialization: newUserInfo.lecturer?.specialization || '',
+            staff_number: newLecturerInfo.staff_number || '',
+            name: newLecturerInfo.name,
+            title: newLecturerInfo.title,
+            email: newLecturerInfo.email,
+            department: newLecturerInfo.department,
+            phone: newLecturerInfo.phone || '',
+            external_institution: newLecturerInfo.external_institution || '',
+            specialization: newLecturerInfo.specialization || '',
         };
-        staffNumber.value = newUserInfo.staff_number;
     }
 }, { immediate: true, deep: true });
 
 watch(() => props.dialog, (newVal) => {
     if (newVal) {
-        if (!enumsStore.enumsData) {
+        if (enumsStore.enumsData === null) {
             enumsStore.fetchEnums();
         }
     } else {
@@ -240,7 +245,7 @@ watch(() => props.dialog, (newVal) => {
 });
 
 onMounted(() => {
-    if (!enumsStore.enumsData) {
+    if (enumsStore.enumsData === null) {
         enumsStore.fetchEnums();
     }
 });

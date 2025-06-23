@@ -2,6 +2,7 @@
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineNuxtConfig({
+  devtools: { enabled: true },
   ssr: false,
 
   typescript: {
@@ -21,7 +22,7 @@ export default defineNuxtConfig({
     ],
     define: {
       "process.env.DEBUG": false,
-      'import.meta.env.API_BASE_URL': JSON.stringify(process.env.API_BASE_URL || 'http://localhost:8080/api'),
+      'import.meta.env.API_BASE_URL': JSON.stringify(process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api'),
     },
   },
 
@@ -48,7 +49,7 @@ export default defineNuxtConfig({
   // App config
   app: {
     head: {
-      title: 'UTM FSES',
+      title: 'FSES - First Stage Evaluation System',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -58,6 +59,15 @@ export default defineNuxtConfig({
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
       ]
     },
+  },
+
+  vuetify: {
+    moduleOptions: {
+      /* module specific options */
+    },
+    vuetifyOptions: {
+      /* vuetify options */
+    }
   },
 
   // Development server options

@@ -1,5 +1,7 @@
 import { watch, ref, onUnmounted } from 'vue';
 import { useAuthStore, useAuth } from '@/composables/useAuth';
+import { useEnumsStore } from '@/stores/enums';
+import { usePgamStore } from '@/stores/pgam';
 import { useNuxtApp, defineNuxtPlugin } from 'nuxt/app';
 import type { $Fetch } from 'nitropack';
 
@@ -8,6 +10,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   // Only run this on the client side
   if (process.client) {
     const authStore = useAuthStore();
+    const enumsStore = useEnumsStore();
+    const pgamStore = usePgamStore();
 
     // Make auth store available globally (using provide)
     nuxtApp.provide('auth', useAuth()); // Provide the composable wrapper
@@ -20,15 +24,23 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       // Watch for authentication state changes
       const stopWatcher = watch(
         () => authStore.isAuthenticated,
-        (isAuthenticated) => {
+        async (isAuthenticated) => {
           // Clear existing interval
           if (refreshInterval.value) {
             clearInterval(refreshInterval.value);
             refreshInterval.value = null;
           }
 
-          // If authenticated and app is mounted, set up token refresh
+          // If authenticated and app is mounted, set up token refresh and fetch enums
           if (isAuthenticated && isAppMounted.value) {
+            // Fetch enums after authentication
+            try {
+              await enumsStore.fetchEnums();
+              await pgamStore.fetchPgamUser(); // Fetch PGAM user
+            } catch (error) {
+              console.error('Failed to fetch initial data:', error);
+            }
+
             // Refresh token every 10 minutes (adjust as needed)
             refreshInterval.value = setInterval(async () => {
               await authStore.refreshToken();

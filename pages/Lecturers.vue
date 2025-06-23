@@ -1,7 +1,7 @@
 <template>
   <v-row>
     <v-col cols="12" md="12">
-      <h1>User Management</h1>
+      <h1>Lecturer Management</h1>
       <!-- Action Buttons -->
       <div class="d-flex justify-end mb-4 mt-4 gap-2">
         <v-btn 
@@ -10,56 +10,48 @@
           variant="flat" 
           :prepend-icon="PlusIcon"
         >
-          Add User
+          Add Lecturer
         </v-btn>
       </div>
 
       <!-- Filters -->
-      <UserFilters @filters-updated="handleFiltersUpdated" />
+      <LecturerFilters @filters-updated="handleFiltersUpdated" />
 
-      <!-- Users Table -->
+      <!-- Lecturers Table -->
       <UiParentCard class="mt-4" :showTitle="false">
-        <UsersTable
-          :users="users"
+        <LecturersTable
+          :lecturers="lecturers"
           :loading="loading"
           :total-items="pagination.totalItems"
           :items-per-page="pagination.itemsPerPage"
           :page="pagination.page"
           @update-options="handleOptionsUpdate"
-          @edit-user="handleEditUser"
-          @delete-user="handleDeleteUser"
+          @edit-lecturer="handleEditLecturer"
+          @delete-lecturer="handleDeleteLecturer"
           @page-changed="handlePageChange"
           @items-per-page-changed="handleItemsPerPageChange"
-          @show-details="handleShowDetails"
         />
       </UiParentCard>
     </v-col>
   </v-row>
 
   <!-- Dialogs -->
-
-  <AddUserForm
+  <AddLecturerForm
     :dialog="showAddFormDialog"
     @toggle-dialog="showAddFormDialog = false"
-    @user-added="handleUserAdded"
+    @lecturer-added="handleLecturerAdded"
   />
-  <UpdateUserForm
-    v-if="selectedUser"
+  <UpdateLecturerForm
+    v-if="selectedLecturer"
     :dialog="showUpdateFormDialog"
-    :user-info="selectedUser"
+    :lecturer-info="selectedLecturer"
     @toggle-dialog="showUpdateFormDialog = false"
-    @user-updated="handleUserUpdated"
-  />
-  <UserDetailsModal
-    v-if="selectedUser"
-    :dialog="showDetailsDialog"
-    :user="selectedUser"
-    @toggle-dialog="showDetailsDialog = false"
+    @lecturer-updated="handleLecturerUpdated"
   />
   <v-dialog v-model="showDeleteDialog" max-width="400">
     <v-card
       title="Confirm Deletion"
-      text="Are you sure you want to remove this user? This action cannot be undone."
+      text="Are you sure you want to remove this lecturer? This action cannot be undone."
     >
       <template v-slot:prepend>
         <v-icon :icon="ExclamationCircleIcon" color="error"></v-icon>
@@ -70,7 +62,7 @@
           color="error"
           text="Delete"
           :loading="loading"
-          @click="confirmDeleteUser"
+          @click="confirmDeleteLecturer"
         ></v-btn>
         <v-btn text="Cancel" @click="showDeleteDialog = false"></v-btn>
       </v-card-actions>
@@ -81,13 +73,12 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch } from 'vue';
 import UiParentCard from '~/components/shared/UiParentCard.vue';
-import UserFilters from '~/components/users/UserFilters.vue';
-import UsersTable from '~/components/users/UsersTable.vue';
-import AddUserForm from '~/components/users/AddUserForm.vue';
-import UpdateUserForm from '~/components/users/UpdateUserForm.vue';
-import UserDetailsModal from '~/components/users/UserDetailsModal.vue';
+import LecturerFilters from '~/components/lecturers/LecturerFilters.vue';
+import LecturersTable from '~/components/lecturers/LecturersTable.vue';
+import AddLecturerForm from '~/components/lecturers/AddLecturerForm.vue';
+import UpdateLecturerForm from '~/components/lecturers/UpdateLecturerForm.vue';
 import { useUserManagement } from '~/composables/useUserManagement';
-import type { User } from '~/types/global';
+import type { Lecturer } from '~/types/global';
 import { PlusIcon, ExclamationCircleIcon } from 'vue-tabler-icons';
 
 const userManagement = useUserManagement();
@@ -96,11 +87,10 @@ const userManagement = useUserManagement();
 const showAddFormDialog = ref(false);
 const showUpdateFormDialog = ref(false);
 const showDeleteDialog = ref(false);
-const showDetailsDialog = ref(false);
 
-// User data and state
-const users = ref<User[]>([]);
-const selectedUser = ref<User | null>(null);
+// Lecturer data and state
+const lecturers = ref<Lecturer[]>([]);
+const selectedLecturer = ref<Lecturer | null>(null);
 const loading = ref(false);
 const activeFilters = ref({});
 
@@ -112,12 +102,12 @@ const pagination = reactive({
   sortBy: [{ key: 'name', order: 'desc' }],
 });
 
-// Fetch users from API
-const fetchUsers = async () => {
+// Fetch lecturers from API
+const fetchLecturers = async () => {
   loading.value = true;
   try {
-    // Call the getUsers API with the correct parameters
-    const response = await userManagement.getUsers({
+    // Call the getLecturers API with the correct parameters
+    const response = await userManagement.getLecturers({
       page: pagination.page,
       perPage: pagination.itemsPerPage,
       sortBy: pagination.sortBy.length ? pagination.sortBy[0].key : 'name',
@@ -125,12 +115,12 @@ const fetchUsers = async () => {
       filters: activeFilters.value
     });
 
-    // Update the users and pagination
-    users.value = response.data.items || [];
+    // Update the lecturers and pagination
+    lecturers.value = response.data.items || [];
     pagination.totalItems = response.data.pagination?.total || 0;
 
   } catch (error) {
-    console.error('Error fetching users:', error);
+    console.error('Error fetching lecturers:', error);
   } finally {
     loading.value = false;
   }
@@ -140,62 +130,53 @@ const fetchUsers = async () => {
 const handleFiltersUpdated = (filters: any) => {
   activeFilters.value = filters;
   pagination.page = 1; // Reset to first page
-  fetchUsers();
+  fetchLecturers();
 };
 
 const handlePageChange = (newPage: number) => {
   pagination.page = newPage;
-  fetchUsers();
+  fetchLecturers();
 };
 
 const handleItemsPerPageChange = (newItemsPerPage: number) => {
   pagination.itemsPerPage = newItemsPerPage;
   pagination.page = 1; // Reset to first page
-  fetchUsers();
+  fetchLecturers();
 };
 
 const handleOptionsUpdate = ({ page, itemsPerPage, sortBy }: any) => {
   pagination.page = page;
   pagination.itemsPerPage = itemsPerPage;
   pagination.sortBy = sortBy;
-  fetchUsers();
+  fetchLecturers();
 };
 
-const handleImportComplete = () => {
-  fetchUsers(); // Refresh list after bulk import
+const handleLecturerAdded = () => {
+  fetchLecturers(); // Refresh list
 };
 
-const handleUserAdded = () => {
-  fetchUsers(); // Refresh list
+const handleLecturerUpdated = () => {
+  fetchLecturers(); // Refresh list
 };
 
-const handleUserUpdated = () => {
-  fetchUsers(); // Refresh list
-};
-
-const handleEditUser = (user: User) => {
-  selectedUser.value = user;
+const handleEditLecturer = (lecturer: Lecturer) => {
+  selectedLecturer.value = lecturer;
   showUpdateFormDialog.value = true;
 };
 
-const handleShowDetails = (user: User) => {
-  selectedUser.value = user;
-  showDetailsDialog.value = true;
-};
-
-const handleDeleteUser = (user: User) => {
-  selectedUser.value = user;
+const handleDeleteLecturer = (lecturer: Lecturer) => {
+  selectedLecturer.value = lecturer;
   showDeleteDialog.value = true;
 };
 
-const confirmDeleteUser = async () => {
-  if (!selectedUser.value) return;
+const confirmDeleteLecturer = async () => {
+  if (!selectedLecturer.value) return;
   loading.value = true;
   try {
-    await userManagement.deleteUser(selectedUser.value.id.toString());
-    fetchUsers();
+    await userManagement.deleteLecturer(selectedLecturer.value.id.toString());
+    fetchLecturers();
   } catch (error) {
-    console.error('Error deleting user:', error);
+    console.error('Error deleting lecturer:', error);
   } finally {
     showDeleteDialog.value = false;
     loading.value = false;
@@ -203,6 +184,6 @@ const confirmDeleteUser = async () => {
 };
 
 onMounted(() => {
-  fetchUsers();
+  fetchLecturers();
 });
 </script>

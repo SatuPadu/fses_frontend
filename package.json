@@ -12,6 +12,7 @@
     "postinstall": "nuxt prepare"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.18",
     "autoprefixer": "^10.4.21",
     "nuxt": "3.16.2",
     "postcss": "^8.5.3",
@@ -33,7 +34,8 @@
     "vue-tabler-icons": "2.21.0",
     "vue3-apexcharts": "1.5.2",
     "vue3-perfect-scrollbar": "1.6.1",
-    "vuetify": "3.7.18"
+    "vuetify": "3.7.18",
+    "vuetify-nuxt-module": "^0.18.7"
   },
   "overrides": {
     "nth-check": "2.1.1"

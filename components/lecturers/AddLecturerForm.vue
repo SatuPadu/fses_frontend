@@ -1,11 +1,8 @@
 <template>
-    <v-dialog
-        v-model="dialogModel"
-        max-width="600"
-    >
+    <v-dialog v-model="dialogModel" max-width="600">
         <v-card>
             <v-card-title class="d-flex justify-space-between align-center">
-                <span>Update User</span>
+                <span>Add New Lecturer</span>
                 <v-btn icon="mdi-close" variant="text" @click="toggleDialog"></v-btn>
             </v-card-title>
             <v-divider></v-divider>
@@ -14,11 +11,10 @@
                     <v-col cols="12" sm="6">
                         <v-label class="font-weight-bold mb-1">Staff Number</v-label>
                         <v-text-field
-                            :model-value="staffNumber"
+                            v-model="formData.staff_number"
                             density="compact"
                             variant="outlined"
-                            readonly
-                            disabled
+                            :error-messages="formErrors.staff_number"
                         ></v-text-field>
                     </v-col>
                     <v-col cols="12" sm="6">
@@ -103,18 +99,18 @@
                     variant="flat" 
                     :loading="loading"
                 >
-                    Update User
+                    Create Lecturer
                 </v-btn>
                 <v-btn @click="toggleDialog" :disabled="loading">Cancel</v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>
-</template>
+</template> 
+
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { useEnumsStore } from '~/stores/enums';
-import type { User } from '~/types/global';
 
 const userManagement = useUserManagement();
 const enumsStore = useEnumsStore();
@@ -123,26 +119,23 @@ const props = defineProps({
     dialog: {
         type: Boolean,
         default: false
-    },
-    userInfo: {
-        type: Object as () => User | null,
-        default: null
     }
 });
 
-const emits = defineEmits(['toggle-dialog', 'user-updated']);
+const emits = defineEmits(['toggle-dialog', 'lecturer-added']);
 
 const dialogModel = computed({
     get() {
-        return props.dialog;
+        return props.dialog
     },
     set() {
-        toggleDialog();
+        toggleDialog()
     }
 });
 
 // Form data
 const formData = ref({
+    staff_number: '',
     name: '',
     title: null as string | null,
     email: '',
@@ -151,7 +144,6 @@ const formData = ref({
     external_institution: '',
     specialization: '',
 });
-const staffNumber = ref('');
 
 // Form validation
 const formErrors = ref<Record<string, string>>({});
@@ -177,23 +169,22 @@ const validateForm = () => {
 };
 
 const handleSubmit = async () => {
-    if (!validateForm() || !props.userInfo) {
+    if (!validateForm()) {
         return;
     }
 
     loading.value = true;
+    formErrors.value = {};
 
     try {
-        await userManagement.updateUser(props.userInfo.id.toString(), formData.value);
-        
-        emits('user-updated');
-        
+        await userManagement.createLecturer(formData.value);
+        emits('lecturer-added');
         toggleDialog();
     } catch (error: any) {
         if (error.response && error.response.data && error.response.data.errors) {
             formErrors.value = error.response.data.errors;
         } else {
-            console.error('Error updating user:', error);
+            console.error('Error creating lecturer:', error);
         }
     } finally {
         loading.value = false;
@@ -202,6 +193,7 @@ const handleSubmit = async () => {
 
 const resetForm = () => {
     formData.value = {
+        staff_number: '',
         name: '',
         title: null,
         email: '',
@@ -210,39 +202,20 @@ const resetForm = () => {
         external_institution: '',
         specialization: '',
     };
-    staffNumber.value = '';
     formErrors.value = {};
 };
 
-watch(() => props.userInfo, (newUserInfo) => {
-    if (newUserInfo) {
-        formData.value = {
-            name: newUserInfo.name,
-            title: newUserInfo.lecturer?.title || null,
-            email: newUserInfo.email,
-            department: newUserInfo.department,
-            phone: newUserInfo.lecturer?.phone || '',
-            external_institution: newUserInfo.lecturer?.external_institution || '',
-            specialization: newUserInfo.lecturer?.specialization || '',
-        };
-        staffNumber.value = newUserInfo.staff_number;
-    }
-}, { immediate: true, deep: true });
-
 watch(() => props.dialog, (newVal) => {
-    if (newVal) {
-        if (!enumsStore.enumsData) {
-            enumsStore.fetchEnums();
-        }
-    } else {
+    if (!newVal) {
         resetForm();
-    }
-});
-
-onMounted(() => {
-    if (!enumsStore.enumsData) {
+    } else if (enumsStore.enumsData === null) {
         enumsStore.fetchEnums();
     }
 });
 
+onMounted(() => {
+    if (enumsStore.enumsData === null) {
+        enumsStore.fetchEnums();
+    }
+});
 </script>
