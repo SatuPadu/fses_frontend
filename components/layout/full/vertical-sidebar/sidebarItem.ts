@@ -89,6 +89,12 @@ const sidebarItem: menu[] = [
     to: "/",
     external: false,
   },
+  {
+    title: "User Management",
+    icon: UserIcon,
+    to: "/users",
+    external: false,
+  },
 
   { header: "utilities" },
   {
