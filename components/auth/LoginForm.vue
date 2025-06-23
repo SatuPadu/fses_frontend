@@ -27,7 +27,7 @@
 
     <v-col v-if="error" cols="12" class="pt-0">
       <v-alert
-        type="error"
+        :type="accountLocked ? 'warning' : 'error'"
         variant="tonal"
         density="compact"
         class="mb-2"
@@ -74,28 +74,41 @@ const formData = reactive<LoginCredentials>({
 
 const error = ref('');
 const loading = ref(false);
+const accountLocked = ref(false);
 
 const handleLogin = async () => {
   // Form validation
   if (!formData.identity || !formData.password) {
     error.value = 'Please enter both username and password';
+    accountLocked.value = false;
     return;
   }
 
   loading.value = true;
   error.value = '';
+  accountLocked.value = false;
 
   try {
     // Use the loginAndRedirect method which handles all redirection logic
-    const success = await auth.loginAndRedirect(formData);
-    
-    if (!success) {
-      error.value = 'Invalid credentials. Please check your username and password.';
+    const result = await auth.login(formData);
+        
+    if (!result.success) {
+      error.value = result.error || 'Invalid credentials. Please check your username and password.';
+      accountLocked.value = result.accountLocked || false;
+    } else {
+      // Handle successful login and redirection
+      if (auth.needsPasswordChange) {
+        // Redirect to password change page
+        await navigateTo('/auth/set-new-password');
+      } else {
+        // Redirect to home
+        await navigateTo('/');
+      }
     }
-    // No need for manual redirection as it's handled in loginAndRedirect
   } catch (err: any) {
     console.error('Login error:', err);
     error.value = err?.message || 'An unexpected error occurred. Please try again.';
+    accountLocked.value = false;
   } finally {
     loading.value = false;
   }

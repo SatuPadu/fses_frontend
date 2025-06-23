@@ -5,12 +5,9 @@ import type {
   Role,
   LoginCredentials,
   PasswordChangePayload,
-  LoginResponse,
-  FetchUserResponse,
-  ApiResponse,
-  TokenResponse,
   Permissions,
   AuthState,
+  AccountLockedError,
 } from '@/types/auth';
 
 // Create a persistent storage composable
@@ -123,52 +120,78 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
 
     try {
-      const { data: response } = await useFetch<ApiResponse<LoginResponse['data']>>(
-        `${import.meta.env.API_BASE_URL}/auth/login`,
-        {
-          method: 'POST',
-          body: credentials,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      // Use native fetch for better error handling
+      const response = await fetch(`${import.meta.env.API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
+      // Parse the response body
+      const responseData = await response.json();
+      // Handle successful login response
+      if (responseData && responseData.success) {
+        const data = responseData.data;
 
-      if (response.value && response.value.success) {
-        const responseData = response.value.data;
+        // Check if this is a login response (has access_token) or an error response
+        if ('access_token' in data) {
+          token.value = data.access_token;
+          user.value = data.user;
 
-        token.value = responseData.access_token;
-        user.value = responseData.user;
-
-        // Parse and store roles
-        roles.value = responseData?.roles?.map((role: any) => {
-          // Ensure role permissions are correctly handled whether they're a string or object
-          if (typeof role.permissions === 'string' && role.permissions) {
-            try {
-              // Try to parse the permissions JSON string
-              const parsedPermissions = JSON.parse(role.permissions);
-              return { ...role, permissions: parsedPermissions };
-            } catch (e) {
-              console.error('Error parsing role permissions:', e);
-              return role;
+          // Parse and store roles
+          roles.value = data?.user?.roles?.map((role: any) => {
+            // Ensure role permissions are correctly handled whether they're a string or object
+            if (typeof role.permissions === 'string' && role.permissions) {
+              try {
+                // Try to parse the permissions JSON string
+                const parsedPermissions = JSON.parse(role.permissions);
+                return { ...role, permissions: parsedPermissions };
+              } catch (e) {
+                console.error('Error parsing role permissions:', e);
+                return role;
+              }
             }
-          }
-          return role;
-        });
+            return role;
+          });
 
-        // Persist auth state to localStorage
-        persistAuthState();
+          // Persist auth state to localStorage
+          persistAuthState();
 
-        return {
-          success: true,
-          needsPasswordChange: !responseData.user.is_password_updated,
+          return {
+            success: true,
+            needsPasswordChange: !data.user.is_password_updated,
+            accountLocked: false,
+          };
+        }
+      }
+
+      // Handle unsuccessful response (including account locked)
+      if (responseData && !responseData.success) {
+        const data = responseData.data as AccountLockedError;
+
+        // Check if account is locked
+        if (data && 'account_locked' in data && data.account_locked) {
+          return { 
+            success: false, 
+            error: data.message || data.error || responseData.message || 'Account is locked due to multiple failed login attempts with wrong password. Please contact administrator.',
+            accountLocked: true 
+          };
+        }
+        
+        return { 
+          success: false, 
+          error: data.message || responseData.message || 'Login failed',
+          accountLocked: false 
         };
       }
 
-      return { success: false, error: response.value?.message || 'Login failed' };
+      // Fallback for unexpected response structure
+      return { success: false, error: 'Login failed', accountLocked: false };
     } catch (err: any) {
+      console.error('Login error:', err);
       error.value = err.message || 'Login failed';
-      return { success: false, error: error.value };
+      return { success: false, error: error.value, accountLocked: false };
     } finally {
       loading.value = false;
     }
@@ -179,7 +202,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       if (token.value) {
-        await useFetch(`${import.meta.env.API_BASE_URL}/auth/logout`, {
+        await fetch(`${import.meta.env.API_BASE_URL}/auth/logout`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token.value}`,
@@ -205,26 +228,25 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true;
 
     try {
-      const { data, error: apiError } = await useFetch<ApiResponse<FetchUserResponse['data']>>(
-        `${import.meta.env.API_BASE_URL}/auth/auth-user`,
-        {
-          headers: {
-            Authorization: `Bearer ${token.value}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await fetch(`${import.meta.env.API_BASE_URL}/auth/auth-user`, {
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-      if (apiError.value) {
-        throw new Error(apiError.value.message || 'Failed to fetch user profile');
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error.message || 'Failed to fetch user profile');
       }
 
-      if (data.value && data.value.success && data.value.data.user) {
-        user.value = data.value.data.user;
+      if (data.success && data.data.user) {
+        user.value = data.data.user;
 
         // Update roles if included in response
-        if (data.value.data.roles) {
-          roles.value = data.value.data.roles.map((role) => {
+        if (data.data.roles) {
+          roles.value = data.data.roles.map((role) => {
             // Handle parsing permissions if they're a string
             if (typeof role.permissions === 'string' && role.permissions) {
               try {
@@ -242,7 +264,7 @@ export const useAuthStore = defineStore('auth', () => {
         // Persist updated state
         persistAuthState();
 
-        return data.value.data.user;
+        return data.data.user;
       }
 
       return null;
@@ -270,25 +292,24 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
 
     try {
-      const { data, error: apiError } = await useFetch<ApiResponse<TokenResponse>>(
-        `${import.meta.env.API_BASE_URL}/auth/set-new-password`,
-        {
-          method: 'POST',
-          body: payload,
-          headers: {
-            Authorization: `Bearer ${token.value}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await fetch(`${import.meta.env.API_BASE_URL}/auth/set-new-password`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
 
-      if (apiError.value) {
-        throw new Error(apiError.value.message || 'Failed to change password');
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error.message || 'Failed to change password');
       }
 
-      if (data.value && data.value.success && data.value.data.access_token) {
+      if (data.success && data.data.access_token) {
         // Update token with new one from response
-        token.value = data.value.data.access_token;
+        token.value = data.data.access_token;
 
         // Update user object
         if (user.value) {
@@ -306,7 +327,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       return {
         success: false,
-        error: data.value?.message || 'Invalid response from server',
+        error: data.message || 'Invalid response from server',
       };
     } catch (err: any) {
       error.value = err.message || 'Failed to change password';
@@ -322,23 +343,22 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true;
 
     try {
-      const { data, error: apiError } = await useFetch<ApiResponse<TokenResponse>>(
-        `${import.meta.env.API_BASE_URL}/auth/refresh`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token.value}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await fetch(`${import.meta.env.API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-      if (apiError.value) {
-        throw new Error(apiError.value.message || 'Failed to refresh token');
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error.message || 'Failed to refresh token');
       }
 
-      if (data.value && data.value.success && data.value.data.access_token) {
-        token.value = data.value.data.access_token;
+      if (data.success && data.data.access_token) {
+        token.value = data.data.access_token;
         persistAuthState();
         return true;
       }
@@ -357,28 +377,27 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
 
     try {
-      const { data, error: apiError } = await useFetch<ApiResponse<{ message: string }>>(
-        `${import.meta.env.API_BASE_URL}/password/reset`,
-        {
-          method: 'POST',
-          body: payload,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await fetch(`${import.meta.env.API_BASE_URL}/password/reset`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
 
-      if (apiError.value) {
-        throw new Error(apiError.value.message || 'Failed to reset password');
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error.message || 'Failed to reset password');
       }
 
-      if (data.value && data.value.success) {
-        return { success: true, message: data.value.message };
+      if (data.success) {
+        return { success: true, message: data.message };
       }
 
       return {
         success: false,
-        error: data.value?.message || 'Failed to reset password',
+        error: data.message || 'Failed to reset password',
       };
     } catch (err: any) {
       error.value = err.message || 'Failed to reset password';
@@ -393,28 +412,27 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
 
     try {
-      const { data, error: apiError } = await useFetch<ApiResponse<{ message: string }>>(
-        `${import.meta.env.API_BASE_URL}/password/reset-link`,
-        {
-          method: 'POST',
-          body: { email },
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await fetch(`${import.meta.env.API_BASE_URL}/password/reset-link`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
 
-      if (apiError.value) {
-        throw new Error(apiError.value.message || 'Failed to send reset link');
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error.message || 'Failed to send reset link');
       }
 
-      if (data.value && data.value.success) {
-        return { success: true, message: data.value.message };
+      if (data.success) {
+        return { success: true, message: data.message };
       }
 
       return {
         success: false,
-        error: data.value?.message || 'Failed to send reset link',
+        error: data.message || 'Failed to send reset link',
       };
     } catch (err: any) {
       error.value = err.message || 'Failed to send reset link';
@@ -511,7 +529,6 @@ export function useAuth() {
 
   const loginAndRedirect = async (credentials: LoginCredentials) => {
     const result = await authStore.login(credentials);
-    console.log(result);
 
     if (result.success) {
       if (authStore.needsPasswordChange) {

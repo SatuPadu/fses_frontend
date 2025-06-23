@@ -70,6 +70,12 @@ export interface FetchUserResponse {
   message: string;
 }
 
+export interface AccountLockedError {
+  error: string;
+  account_locked: boolean;
+  message?: string;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
