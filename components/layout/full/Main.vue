@@ -1,8 +1,58 @@
 <script setup lang="ts">
-import { ref, shallowRef } from "vue";
+import { ref, computed } from "vue";
 import sidebarItems from "@/components/layout/full/vertical-sidebar/sidebarItem";
 import { Menu2Icon } from "vue-tabler-icons";
-const sidebarMenu = shallowRef(sidebarItems);
+import { usePermissions } from "~/composables/usePermissions";
+
+const { hasPermission, isInitialized } = usePermissions();
+
+// Filter sidebar items based on permissions
+const sidebarMenu = computed(() => {
+  const filteredItems: typeof sidebarItems = [];
+  let lastHeader: string | null = null;
+  let hasVisibleItemsInCurrentSection = false;
+
+  for (let i = 0; i < sidebarItems.length; i++) {
+    const item = sidebarItems[i];
+    
+    // Check if this item should be visible
+    let shouldShowItem = false;
+    
+    if (item.header) {
+      // For headers, we need to check if there are any visible items in the next section
+      shouldShowItem = false; // We'll determine this after checking the next items
+    } else {
+      // For regular items
+      if (!item.requiredPermission) {
+        shouldShowItem = true;
+      } else if (item.requiredPermission === "dashboard:view") {
+        shouldShowItem = true;
+      } else if (!isInitialized.value) {
+        shouldShowItem = false;
+      } else {
+        const [module, action] = item.requiredPermission.split(':');
+        shouldShowItem = hasPermission(module, action);
+      }
+    }
+
+    if (item.header) {
+      // Store the header for later processing
+      lastHeader = item.header;
+      hasVisibleItemsInCurrentSection = false;
+    } else if (shouldShowItem) {
+      // If this item is visible and we have a pending header, add the header first
+      if (lastHeader && !hasVisibleItemsInCurrentSection) {
+        filteredItems.push({ header: lastHeader });
+        lastHeader = null;
+      }
+      hasVisibleItemsInCurrentSection = true;
+      filteredItems.push(item);
+    }
+  }
+
+  return filteredItems;
+});
+
 const sDrawer = ref(true);
 </script>
 

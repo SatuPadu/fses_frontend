@@ -464,20 +464,56 @@ export const useUserManagement = () => {
     try {
       const response = await fetch(`${import.meta.env.API_BASE_URL}/users/${userId}`, {
         method: 'DELETE',
-        headers: getHeaders(),
+        headers: {
+          ...getHeaders(),
+          'Content-Type': 'application/json',
+        },
       });
 
       const data = await response.json();
 
       if (data.error) {
-        throw new Error(data.error.message || `Failed to delete user ${userId}`);
+        throw new Error(data.error.message || 'Failed to delete user');
       }
 
-      if (!data.success) {
-        throw new Error(data.message || `Failed to delete user ${userId}`);
+      if (data.success) {
+        return data;
       }
+
+      throw new Error(data.message || 'Failed to delete user');
     } catch (e: any) {
-      error.value = e.message || `Failed to delete user ${userId}`;
+      error.value = e.message || 'Failed to delete user';
+      throw e;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const reactivateUser = async (userId: string) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await fetch(`${import.meta.env.API_BASE_URL}/auth/reactivate/${userId}`, {
+        method: 'GET',
+        headers: {
+          ...getHeaders(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error.message || 'Failed to reactivate user');
+      }
+
+      if (data.success) {
+        return data;
+      }
+
+      throw new Error(data.message || 'Failed to reactivate user');
+    } catch (e: any) {
+      error.value = e.message || 'Failed to reactivate user';
       throw e;
     } finally {
       loading.value = false;
@@ -706,6 +742,73 @@ export const useUserManagement = () => {
     }
   };
 
+  const importData = async (file: File) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`${import.meta.env.API_BASE_URL}/imports/upload`, {
+        method: 'POST',
+        headers: {
+          ...getHeaders(),
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error.message || 'Failed to import data');
+      }
+
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to import data');
+      }
+
+      return data;
+    } catch (e: any) {
+      error.value = e.message || 'Failed to import data';
+      throw e;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const getImportStream = (importId: string, onMessage: (data: any) => void, onError?: (error: any) => void) => {
+    const token = authStore.token;
+    if (!token) {
+      throw new Error('Authentication token is not available.');
+    }
+    const streamUrl = `${import.meta.env.API_BASE_URL}/imports/${importId}/stream?token=${token}`;
+    
+    const eventSource = new EventSource(streamUrl);
+
+    eventSource.onopen = () => {
+      console.log('Import stream connected');
+    };
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        onMessage(data);
+      } catch (error) {
+        console.error('Error parsing stream data:', error);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('EventSource failed:', error);
+      if (onError) {
+        onError(error);
+      }
+      eventSource.close();
+    };
+
+    return eventSource;
+  };
+
   return {
     loading,
     error,
@@ -731,5 +834,8 @@ export const useUserManagement = () => {
     downloadImportErrors,
     getAllPrograms,
     getAllLecturers,
+    importData,
+    getImportStream,
+    reactivateUser,
   };
 }; 

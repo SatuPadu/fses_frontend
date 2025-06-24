@@ -1,73 +1,87 @@
 <template>
-  <v-row>
-    <v-col cols="12" md="12">
-      <h1>Lecturer Management</h1>
-      <!-- Action Buttons -->
-      <div class="d-flex justify-end mb-4 mt-4 gap-2">
-        <v-btn 
-          @click="showAddFormDialog = true" 
-          color="primary" 
-          variant="flat" 
-          :prepend-icon="PlusIcon"
+  <PermissionGuard module="lecturers" action="view">
+    <v-row>
+      <v-col cols="12" md="12">
+        <h1>Lecturer Management</h1>
+        <!-- Action Buttons -->
+        <div class="d-flex justify-end mb-4 mt-4 gap-2">
+          <PermissionButton 
+            module="lecturers" 
+            action="create"
+            @click="showAddFormDialog = true" 
+            color="primary" 
+            variant="flat" 
+            :prepend-icon="PlusIcon"
+          >
+            Add Lecturer
+          </PermissionButton>
+        </div>
+
+        <!-- Filters -->
+        <LecturerFilters @filters-updated="handleFiltersUpdated" />
+
+        <!-- Lecturers Table -->
+        <UiParentCard class="mt-4" :showTitle="false">
+          <LecturersTable
+            :lecturers="lecturers"
+            :loading="loading"
+            :total-items="pagination.totalItems"
+            :items-per-page="pagination.itemsPerPage"
+            :page="pagination.page"
+            @update-options="handleOptionsUpdate"
+            @edit-lecturer="handleEditLecturer"
+            @delete-lecturer="handleDeleteLecturer"
+            @page-changed="handlePageChange"
+            @items-per-page-changed="handleItemsPerPageChange"
+          />
+        </UiParentCard>
+      </v-col>
+    </v-row>
+
+    <!-- Dialogs -->
+    <PermissionGuard module="lecturers" action="create">
+      <AddLecturerForm
+        :dialog="showAddFormDialog"
+        @toggle-dialog="showAddFormDialog = false"
+        @lecturer-added="handleLecturerAdded"
+      />
+    </PermissionGuard>
+
+    <PermissionGuard module="lecturers" action="edit">
+      <UpdateLecturerForm
+        v-if="selectedLecturer"
+        :dialog="showUpdateFormDialog"
+        :lecturer-info="selectedLecturer"
+        @toggle-dialog="showUpdateFormDialog = false"
+        @lecturer-updated="handleLecturerUpdated"
+      />
+    </PermissionGuard>
+
+    <PermissionGuard module="lecturers" action="delete">
+      <v-dialog v-model="showDeleteDialog" max-width="400">
+        <v-card
+          title="Confirm Deletion"
+          text="Are you sure you want to remove this lecturer? This action cannot be undone."
         >
-          Add Lecturer
-        </v-btn>
-      </div>
-
-      <!-- Filters -->
-      <LecturerFilters @filters-updated="handleFiltersUpdated" />
-
-      <!-- Lecturers Table -->
-      <UiParentCard class="mt-4" :showTitle="false">
-        <LecturersTable
-          :lecturers="lecturers"
-          :loading="loading"
-          :total-items="pagination.totalItems"
-          :items-per-page="pagination.itemsPerPage"
-          :page="pagination.page"
-          @update-options="handleOptionsUpdate"
-          @edit-lecturer="handleEditLecturer"
-          @delete-lecturer="handleDeleteLecturer"
-          @page-changed="handlePageChange"
-          @items-per-page-changed="handleItemsPerPageChange"
-        />
-      </UiParentCard>
-    </v-col>
-  </v-row>
-
-  <!-- Dialogs -->
-  <AddLecturerForm
-    :dialog="showAddFormDialog"
-    @toggle-dialog="showAddFormDialog = false"
-    @lecturer-added="handleLecturerAdded"
-  />
-  <UpdateLecturerForm
-    v-if="selectedLecturer"
-    :dialog="showUpdateFormDialog"
-    :lecturer-info="selectedLecturer"
-    @toggle-dialog="showUpdateFormDialog = false"
-    @lecturer-updated="handleLecturerUpdated"
-  />
-  <v-dialog v-model="showDeleteDialog" max-width="400">
-    <v-card
-      title="Confirm Deletion"
-      text="Are you sure you want to remove this lecturer? This action cannot be undone."
-    >
-      <template v-slot:prepend>
-        <v-icon :icon="ExclamationCircleIcon" color="error"></v-icon>
-      </template>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn
-          color="error"
-          text="Delete"
-          :loading="loading"
-          @click="confirmDeleteLecturer"
-        ></v-btn>
-        <v-btn text="Cancel" @click="showDeleteDialog = false"></v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+          <template v-slot:prepend>
+            <v-icon :icon="ExclamationCircleIcon" color="error"></v-icon>
+          </template>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <PermissionButton
+              color="error"
+              text="Delete"
+              :loading="loading"
+              @click="confirmDeleteLecturer"
+              module="lecturers"
+              action="delete"
+            />
+            <v-btn text="Cancel" @click="showDeleteDialog = false"></v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </PermissionGuard>
+  </PermissionGuard>
 </template>
 
 <script setup lang="ts">
@@ -77,11 +91,15 @@ import LecturerFilters from '~/components/lecturers/LecturerFilters.vue';
 import LecturersTable from '~/components/lecturers/LecturersTable.vue';
 import AddLecturerForm from '~/components/lecturers/AddLecturerForm.vue';
 import UpdateLecturerForm from '~/components/lecturers/UpdateLecturerForm.vue';
+import PermissionButton from '~/components/shared/PermissionButton.vue';
+import PermissionGuard from '~/components/shared/PermissionGuard.vue';
 import { useUserManagement } from '~/composables/useUserManagement';
+import { usePermissions } from '~/composables/usePermissions';
 import type { Lecturer } from '~/types/global';
 import { PlusIcon, ExclamationCircleIcon } from 'vue-tabler-icons';
 
 const userManagement = useUserManagement();
+const { canViewLecturers, canCreateLecturers, canEditLecturers, canDeleteLecturers } = usePermissions();
 
 // Dialog states
 const showAddFormDialog = ref(false);
@@ -104,6 +122,12 @@ const pagination = reactive({
 
 // Fetch lecturers from API
 const fetchLecturers = async () => {
+  // Check if user has permission to view lecturers
+  if (!canViewLecturers.value) {
+    console.log('No permission to view lecturers');
+    return;
+  }
+
   loading.value = true;
   try {
     // Call the getLecturers API with the correct parameters
@@ -160,17 +184,23 @@ const handleLecturerUpdated = () => {
 };
 
 const handleEditLecturer = (lecturer: Lecturer) => {
+  if (!canEditLecturers.value) {
+    return;
+  }
   selectedLecturer.value = lecturer;
   showUpdateFormDialog.value = true;
 };
 
 const handleDeleteLecturer = (lecturer: Lecturer) => {
+  if (!canDeleteLecturers.value) {
+    return;
+  }
   selectedLecturer.value = lecturer;
   showDeleteDialog.value = true;
 };
 
 const confirmDeleteLecturer = async () => {
-  if (!selectedLecturer.value) return;
+  if (!selectedLecturer.value || !canDeleteLecturers.value) return;
   loading.value = true;
   try {
     await userManagement.deleteLecturer(selectedLecturer.value.id.toString());
@@ -184,6 +214,9 @@ const confirmDeleteLecturer = async () => {
 };
 
 onMounted(() => {
-  fetchLecturers();
+  // Wait a bit for permissions to initialize, then fetch lecturers
+  setTimeout(() => {
+    fetchLecturers();
+  }, 100);
 });
 </script>

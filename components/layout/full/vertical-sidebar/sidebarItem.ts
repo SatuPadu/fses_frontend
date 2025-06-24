@@ -4,6 +4,7 @@ import {
   UsersIcon,
   BookIcon,
   FileImportIcon,
+  UserCircleIcon,
 } from "vue-tabler-icons";
 
 export interface menu {
@@ -20,6 +21,7 @@ export interface menu {
   type?: string;
   subCaption?: string;
   external?: boolean;
+  requiredPermission?: string;
 }
 
 const sidebarItem: menu[] = [
@@ -36,24 +38,28 @@ const sidebarItem: menu[] = [
     icon: UsersIcon,
     to: "/users",
     external: false,
+    requiredPermission: "users:view",
   },
   {
     title: "Lecturers",
     icon: UserIcon,
     to: "/lecturers",
     external: false,
+    requiredPermission: "lecturers:view",
   },
   {
     title: "Students",
     icon: UserIcon,
     to: "/students",
     external: false,
+    requiredPermission: "students:view",
   },
   {
     title: "Programs",
     icon: BookIcon,
     to: "/programs",
     external: false,
+    requiredPermission: "programs:view",
   },
   { header: "System" },
   {
@@ -61,6 +67,7 @@ const sidebarItem: menu[] = [
     icon: FileImportIcon,
     to: "/import",
     external: false,
+    requiredPermission: "students:import",
   },
 ];
 

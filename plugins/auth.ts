@@ -2,6 +2,7 @@ import { watch, ref, onUnmounted } from 'vue';
 import { useAuthStore, useAuth } from '@/composables/useAuth';
 import { useEnumsStore } from '@/stores/enums';
 import { usePgamStore } from '@/stores/pgam';
+import { usePermissionsStore } from '@/stores/permissions';
 import { useNuxtApp, defineNuxtPlugin } from 'nuxt/app';
 import type { $Fetch } from 'nitropack';
 
@@ -12,6 +13,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     const authStore = useAuthStore();
     const enumsStore = useEnumsStore();
     const pgamStore = usePgamStore();
+    const permissionsStore = usePermissionsStore();
 
     // Make auth store available globally (using provide)
     nuxtApp.provide('auth', useAuth()); // Provide the composable wrapper
@@ -20,6 +22,11 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     nuxtApp.hook('app:mounted', () => {
       const refreshInterval = ref<ReturnType<typeof setInterval> | null>(null);
       const isAppMounted = ref(true); // Track if the app is still mounted
+
+      // Initialize permissions if user is already authenticated
+      if (authStore.isAuthenticated && authStore.roles && authStore.roles.length > 0) {
+        permissionsStore.initializeFromAuthStore(authStore.roles);
+      }
 
       // Watch for authentication state changes
       const stopWatcher = watch(
@@ -33,6 +40,11 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
           // If authenticated and app is mounted, set up token refresh and fetch enums
           if (isAuthenticated && isAppMounted.value) {
+            // Initialize permissions
+            if (authStore.roles && authStore.roles.length > 0) {
+              permissionsStore.initializeFromAuthStore(authStore.roles);
+            }
+            
             // Fetch enums after authentication
             try {
               await enumsStore.fetchEnums();

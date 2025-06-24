@@ -1,72 +1,86 @@
 <template>
-  <v-row>
-    <v-col cols="12" md="12">
-      <h1>Student Management</h1>
-      <!-- Action Buttons -->
-      <div class="d-flex justify-end mb-4 mt-4 gap-2">
-        <v-btn 
-          @click="showAddFormDialog = true" 
-          color="primary" 
-          variant="flat" 
-          :prepend-icon="PlusIcon"
+  <PermissionGuard module="students" action="view">
+    <v-row>
+      <v-col cols="12" md="12">
+        <h1>Student Management</h1>
+        <!-- Action Buttons -->
+        <div class="d-flex justify-end mb-4 mt-4 gap-2">
+          <PermissionButton 
+            module="students" 
+            action="create"
+            @click="showAddFormDialog = true" 
+            color="primary" 
+            variant="flat" 
+            :prepend-icon="PlusIcon"
+          >
+            Add Student
+          </PermissionButton>
+        </div>
+
+        <!-- Filters -->
+        <StudentFilters @filters-updated="handleFiltersUpdated" />
+
+        <!-- Students Table -->
+        <UiParentCard class="mt-4" :showTitle="false">
+          <StudentsTable
+            :students="students"
+            :loading="loading"
+            :total-items="pagination.totalItems"
+            :items-per-page="pagination.itemsPerPage"
+            :page="pagination.page"
+            @update-options="handleOptionsUpdate"
+            @edit-student="handleEditStudent"
+            @delete-student="handleDeleteStudent"
+            @items-per-page-changed="handleItemsPerPageChange"
+          />
+        </UiParentCard>
+      </v-col>
+    </v-row>
+
+    <!-- Dialogs -->
+    <PermissionGuard module="students" action="create">
+      <AddStudentForm
+        :dialog="showAddFormDialog"
+        @toggle-dialog="showAddFormDialog = false"
+        @student-added="handleStudentAdded"
+      />
+    </PermissionGuard>
+
+    <PermissionGuard module="students" action="edit">
+      <UpdateStudentForm
+        v-if="selectedStudent"
+        :dialog="showUpdateFormDialog"
+        :student-info="selectedStudent"
+        @toggle-dialog="showUpdateFormDialog = false"
+        @student-updated="handleStudentUpdated"
+      />
+    </PermissionGuard>
+
+    <PermissionGuard module="students" action="delete">
+      <v-dialog v-model="showDeleteDialog" max-width="400">
+        <v-card
+          title="Confirm Deletion"
+          text="Are you sure you want to remove this student? This action cannot be undone."
         >
-          Add Student
-        </v-btn>
-      </div>
-
-      <!-- Filters -->
-      <StudentFilters @filters-updated="handleFiltersUpdated" />
-
-      <!-- Students Table -->
-      <UiParentCard class="mt-4" :showTitle="false">
-        <StudentsTable
-          :students="students"
-          :loading="loading"
-          :total-items="pagination.totalItems"
-          :items-per-page="pagination.itemsPerPage"
-          :page="pagination.page"
-          @update-options="handleOptionsUpdate"
-          @edit-student="handleEditStudent"
-          @delete-student="handleDeleteStudent"
-          @items-per-page-changed="handleItemsPerPageChange"
-        />
-      </UiParentCard>
-    </v-col>
-  </v-row>
-
-  <!-- Dialogs -->
-  <AddStudentForm
-    :dialog="showAddFormDialog"
-    @toggle-dialog="showAddFormDialog = false"
-    @student-added="handleStudentAdded"
-  />
-  <UpdateStudentForm
-    v-if="selectedStudent"
-    :dialog="showUpdateFormDialog"
-    :student-info="selectedStudent"
-    @toggle-dialog="showUpdateFormDialog = false"
-    @student-updated="handleStudentUpdated"
-  />
-  <v-dialog v-model="showDeleteDialog" max-width="400">
-    <v-card
-      title="Confirm Deletion"
-      text="Are you sure you want to remove this student? This action cannot be undone."
-    >
-      <template v-slot:prepend>
-        <v-icon :icon="ExclamationCircleIcon" color="error"></v-icon>
-      </template>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn
-          color="error"
-          text="Delete"
-          :loading="loading"
-          @click="confirmDeleteStudent"
-        ></v-btn>
-        <v-btn text="Cancel" @click="showDeleteDialog = false"></v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+          <template v-slot:prepend>
+            <v-icon :icon="ExclamationCircleIcon" color="error"></v-icon>
+          </template>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <PermissionButton
+              color="error"
+              text="Delete"
+              :loading="loading"
+              @click="confirmDeleteStudent"
+              module="students"
+              action="delete"
+            />
+            <v-btn text="Cancel" @click="showDeleteDialog = false"></v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </PermissionGuard>
+  </PermissionGuard>
 </template> 
 
 <script setup lang="ts">
@@ -76,11 +90,15 @@ import StudentFilters from '~/components/students/StudentFilters.vue';
 import StudentsTable from '~/components/students/StudentsTable.vue';
 import AddStudentForm from '~/components/students/AddStudentForm.vue';
 import UpdateStudentForm from '~/components/students/UpdateStudentForm.vue';
+import PermissionButton from '~/components/shared/PermissionButton.vue';
+import PermissionGuard from '~/components/shared/PermissionGuard.vue';
 import { useUserManagement } from '~/composables/useUserManagement';
+import { usePermissions } from '~/composables/usePermissions';
 import type { Student } from '~/types/global';
 import { PlusIcon, ExclamationCircleIcon } from 'vue-tabler-icons';
 
 const userManagement = useUserManagement();
+const { canViewStudents, canCreateStudents, canEditStudents, canDeleteStudents } = usePermissions();
 
 // Dialog states
 const showAddFormDialog = ref(false);
@@ -103,6 +121,12 @@ const pagination = reactive({
 
 // Fetch students from API
 const fetchStudents = async () => {
+  // Check if user has permission to view students
+  if (!canViewStudents.value) {
+    console.log('No permission to view students');
+    return;
+  }
+
   loading.value = true;
   try {
     const filters: Record<string, any> = {};
@@ -159,17 +183,23 @@ const handleStudentUpdated = () => {
 };
 
 const handleEditStudent = (student: Student) => {
+  if (!canEditStudents.value) {
+    return;
+  }
   selectedStudent.value = student;
   showUpdateFormDialog.value = true;
 };
 
 const handleDeleteStudent = (student: Student) => {
+  if (!canDeleteStudents.value) {
+    return;
+  }
   selectedStudent.value = student;
   showDeleteDialog.value = true;
 };
 
 const confirmDeleteStudent = async () => {
-  if (!selectedStudent.value) return;
+  if (!selectedStudent.value || !canDeleteStudents.value) return;
   loading.value = true;
   try {
     await userManagement.deleteStudent(selectedStudent.value.id.toString());
@@ -188,6 +218,9 @@ const handleItemsPerPageChange = (newItemsPerPage: number) => {
 };
 
 onMounted(() => {
-  fetchStudents();
+  // Wait a bit for permissions to initialize, then fetch students
+  setTimeout(() => {
+    fetchStudents();
+  }, 100);
 });
 </script>

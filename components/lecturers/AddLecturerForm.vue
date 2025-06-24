@@ -93,14 +93,16 @@
             </v-card-text>
             <v-divider></v-divider>
             <v-card-actions class="justify-start">
-                <v-btn 
+                <PermissionButton
                     @click="handleSubmit" 
                     color="primary" 
                     variant="flat" 
                     :loading="loading"
+                    module="lecturers"
+                    action="create"
                 >
                     Create Lecturer
-                </v-btn>
+                </PermissionButton>
                 <v-btn @click="toggleDialog" :disabled="loading">Cancel</v-btn>
             </v-card-actions>
         </v-card>
@@ -111,6 +113,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { useEnumsStore } from '~/stores/enums';
+import PermissionButton from '~/components/shared/PermissionButton.vue';
 
 const userManagement = useUserManagement();
 const enumsStore = useEnumsStore();
