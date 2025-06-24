@@ -52,16 +52,34 @@
                   />
                 </v-col>
                 <v-col cols="12">
-                  <v-text-field
-                    v-model="postponedToDisplay"
-                    label="New Evaluation Date"
-                    variant="outlined"
-                    density="compact"
-                    type="date"
-                    :rules="[(v: any) => !!v || 'New date is required']"
-                    required
-                    @update:model-value="handleDateChange"
-                  />
+                  <v-menu
+                    v-model="dateMenu"
+                    :close-on-content-click="false"
+                    transition="scale-transition"
+                    offset-y
+                    min-width="auto"
+                  >
+                    <template #activator="{ props }">
+                      <v-text-field
+                        v-model="postponedToDisplay"
+                        label="New Evaluation Date"
+                        variant="outlined"
+                        density="compact"
+                        v-bind="props"
+                        :rules="[(v: any) => !!v || 'New date is required']"
+                        required
+                        placeholder="dd/mm/yyyy"
+                        readonly
+                        append-inner-icon="mdi-calendar"
+                      />
+                    </template>
+                    <v-date-picker
+                      v-model="selectedDate"
+                      color="primary"
+                      show-adjacent-months
+                      @update:model-value="handleDateSelected"
+                    />
+                  </v-menu>
                 </v-col>
               </v-row>
             </div>
@@ -115,40 +133,40 @@ const loading = ref(false);
 
 // Form data
 const reason = ref('');
-const postponedTo = ref<Date | null>(null);
+const selectedDate = ref<Date | null>(null); // Date object for v-date-picker
+const dateMenu = ref(false);
 
-// Computed property for date display (string format for input)
-const postponedToDisplay = computed({
-  get: () => {
-    if (!postponedTo.value) return '';
-    const date = postponedTo.value;
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  },
-  set: (value: string) => {
-    if (value) {
-      postponedTo.value = new Date(value);
-    } else {
-      postponedTo.value = null;
-    }
-  }
+// Computed property for date display (dd/mm/yyyy format)
+const postponedToDisplay = computed(() => {
+  if (!selectedDate.value) return '';
+  const date = selectedDate.value;
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
 });
 
-// Handle date change
-const handleDateChange = (value: string) => {
-  if (value) {
-    postponedTo.value = new Date(value);
-  } else {
-    postponedTo.value = null;
-  }
+// Computed property for API format (yyyy-mm-dd)
+const postponedToAPI = computed(() => {
+  if (!selectedDate.value) return null;
+  const date = selectedDate.value;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+});
+
+// Handle date selection from picker
+const handleDateSelected = (date: Date | null) => {
+  selectedDate.value = date;
+  dateMenu.value = false; // Close the menu when date is selected
 };
 
 // Initialize form
 const initializeForm = () => {
   reason.value = '';
-  postponedTo.value = null;
+  selectedDate.value = null;
+  dateMenu.value = false;
 };
 
 // Submit form
@@ -159,7 +177,7 @@ const submitForm = async () => {
   try {
     const formData = {
       reason: reason.value,
-      postponed_to: postponedTo.value ? formatDateForAPI(postponedTo.value) : null,
+      postponed_to: postponedToAPI.value,
     } as PostponeNominationRequest;
 
     if (props.nominationData) {
@@ -181,30 +199,12 @@ const closeDialog = () => {
   initializeForm();
 };
 
-// Format date for API (YYYY-MM-DD format)
-const formatDateForAPI = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
 // Watch for dialog changes
 watch(() => props.dialog, (newValue) => {
   if (newValue) {
     initializeForm();
   }
 });
-
-// If you display any date, use this helper:
-const formatDate = (dateString?: string | null) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-};
 </script>
 
 <style scoped>
