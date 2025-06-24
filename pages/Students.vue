@@ -49,7 +49,7 @@
 
     <PermissionGuard module="students" action="edit">
       <UpdateStudentForm
-        v-if="selectedStudent"
+        v-show="selectedStudent && showUpdateFormDialog"
         :dialog="showUpdateFormDialog"
         :student="selectedStudent"
         @toggle-dialog="showUpdateFormDialog = false"

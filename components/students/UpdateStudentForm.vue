@@ -153,8 +153,8 @@ const props = defineProps({
         default: false
     },
     student: {
-        type: Object as () => Student,
-        required: true
+        type: Object as () => Student | null,
+        default: null
     }
 });
 
@@ -264,6 +264,11 @@ const populateForm = async () => {
 
 const handleSubmit = async () => {
     if (!validateForm()) {
+        return;
+    }
+
+    if (!props.student) {
+        console.error('No student data available');
         return;
     }
 
