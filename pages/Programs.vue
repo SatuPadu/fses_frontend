@@ -119,7 +119,6 @@ const pagination = reactive({
 const fetchPrograms = async () => {
   // Check if user has permission to view programs
   if (!canViewPrograms.value) {
-    console.log('No permission to view programs');
     return;
   }
 

@@ -121,7 +121,6 @@ const pagination = reactive({
 const fetchLecturers = async () => {
   // Check if user has permission to view lecturers
   if (!canViewLecturers.value) {
-    console.log('No permission to view lecturers');
     return;
   }
 

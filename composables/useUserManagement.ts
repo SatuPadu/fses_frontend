@@ -785,10 +785,6 @@ export const useUserManagement = () => {
     
     const eventSource = new EventSource(streamUrl);
 
-    eventSource.onopen = () => {
-      console.log('Import stream connected');
-    };
-
     eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);

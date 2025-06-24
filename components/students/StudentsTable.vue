@@ -19,7 +19,7 @@
           <td class="border border-gray-300">{{ item.current_semester }}</td>
           <td class="border border-gray-300">{{ item.program?.department || '-' }}</td>
           <td class="border border-gray-300">{{ item.main_supervisor?.name || '-' }}</td>
-          <td v-if="canEditStudents || canDeleteStudents" class="border border-gray-300">
+          <td v-if="canEditStudents || canDeleteStudents || canCreateNominations" class="border border-gray-300">
             <div class="d-flex justify-end">
               <v-btn 
                 v-if="canEditStudents"
@@ -34,6 +34,13 @@
                 variant="text" 
                 @click="deleteStudent(item)"
                 color="error"
+              />
+              <v-btn
+                v-if="canCreateNominations && (!item.evaluations || item.evaluations.length === 0)"
+                icon="mdi-plus"
+                variant="text"
+                @click="$emit('add-nomination', item)"
+                color="success"
               />
             </div>
           </td>
@@ -56,9 +63,9 @@ const props = defineProps<{
 }>();
 
 const { students, loading, totalItems, itemsPerPage, page } = toRefs(props);
-const emits = defineEmits(['update-options', 'edit-student', 'delete-student']);
+const emits = defineEmits(['update-options', 'edit-student', 'delete-student', 'add-nomination']);
 
-const { canEditStudents, canDeleteStudents } = usePermissions();
+const { canEditStudents, canDeleteStudents, canCreateNominations } = usePermissions();
 
 const headers = computed(() => {
   const baseHeaders: Array<{
@@ -77,8 +84,8 @@ const headers = computed(() => {
     { title: 'Supervisor', key: 'main_supervisor.name', sortable: true },
   ];
 
-  // Only add Actions column if user has edit or delete permissions
-  if (canEditStudents.value || canDeleteStudents.value) {
+  // Add Actions column if user has edit/delete permissions or can create nominations
+  if (canEditStudents.value || canDeleteStudents.value || canCreateNominations.value) {
     baseHeaders.push({ title: 'Actions', key: 'actions', sortable: false, align: 'end' });
   }
 

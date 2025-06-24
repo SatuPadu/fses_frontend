@@ -132,7 +132,6 @@ const pagination = reactive({
 const fetchUsers = async () => {
   // Check if user has permission to view users
   if (!canViewUsers.value) {
-    console.log('No permission to view users');
     return;
   }
 

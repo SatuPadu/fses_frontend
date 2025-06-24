@@ -4,7 +4,7 @@ import {
   UsersIcon,
   BookIcon,
   FileImportIcon,
-  UserCircleIcon,
+  AwardIcon,
 } from "vue-tabler-icons";
 
 export interface menu {
@@ -60,6 +60,13 @@ const sidebarItem: menu[] = [
     to: "/programs",
     external: false,
     requiredPermission: "programs:view",
+  },
+  {
+    title: "Examiner Nominations",
+    icon: AwardIcon,
+    to: "/nominations",
+    external: false,
+    requiredPermission: "nominations:view",
   },
   { header: "System" },
   {

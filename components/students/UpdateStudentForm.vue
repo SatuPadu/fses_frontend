@@ -90,27 +90,13 @@
                         <v-select
                             v-model="formData.supervisor_id"
                             :items="lecturers"
-                            item-title="name"
+                            item-title="displayName"
                             item-value="user_id"
                             density="compact"
                             variant="outlined"
                             :error-messages="formErrors.supervisor_id"
                             :loading="loading"
                             required
-                        ></v-select>
-                    </v-col>
-                    <v-col cols="12" sm="6">
-                        <v-label class="font-weight-bold mb-1">Co-Supervisor</v-label>
-                        <v-select
-                            v-model="formData.co_supervisor_id"
-                            :items="lecturers"
-                            item-title="name"
-                            item-value="user_id"
-                            density="compact"
-                            variant="outlined"
-                            :error-messages="formErrors.co_supervisor_id"
-                            :loading="loading"
-                            clearable
                         ></v-select>
                     </v-col>
                     <v-col cols="12" sm="6">
@@ -134,23 +120,6 @@
                             :error-messages="formErrors.research_title"
                         ></v-text-field>
                     </v-col>
-                    <v-col cols="12" sm="6">
-                        <v-label class="font-weight-bold mb-1">Is Postponed</v-label>
-                        <v-switch
-                            v-model="formData.is_postponed"
-                            :error-messages="formErrors.is_postponed"
-                        ></v-switch>
-                    </v-col>
-                    <v-col cols="12" v-if="formData.is_postponed">
-                        <v-label class="font-weight-bold mb-1">Postponement Reason</v-label>
-                        <v-textarea
-                            v-model="formData.postponement_reason"
-                            density="compact"
-                            variant="outlined"
-                            :error-messages="formErrors.postponement_reason"
-                            rows="3"
-                        ></v-textarea>
-                    </v-col>
                 </v-row>
             </v-card-text>
             <v-divider></v-divider>
@@ -170,7 +139,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, nextTick, toRaw } from 'vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { useEnumsStore } from '~/stores/enums';
 import type { Student } from '~/types/global';
@@ -211,10 +180,7 @@ const formData = ref({
     country: '',
     supervisor_id: null as number | null,
     evaluation_type: null as string | null,
-    co_supervisor_id: null as number | null,
     research_title: '',
-    is_postponed: false,
-    postponement_reason: '',
 });
 
 // Form validation
@@ -230,7 +196,7 @@ const isMatricNumberEditable = computed(() => !originalMatricNumber.value);
 const departmentItems = computed(() => enumsStore.getDepartmentOptions());
 const evaluationTypeItems = computed(() => enumsStore.getEvaluationTypeOptions());
 const programs = ref<Array<{ id: number; program_name: string }>>([]);
-const lecturers = ref<Array<{ user_id: number; name: string }>>([]);
+const lecturers = ref<Array<{ user_id: number; name: string; title: string }>>([]);
 
 const toggleDialog = () => {
     emits('toggle-dialog');
@@ -260,30 +226,39 @@ const fetchOptions = async () => {
         ]);
         
         programs.value = programsData;
-        lecturers.value = lecturersData;
+        lecturers.value = lecturersData.map((lecturer: any) => ({
+            ...lecturer,
+            displayName: `${lecturer.title ? lecturer.title + ' ' : ''}${lecturer.name}`.trim()
+        }));
     } catch (e: any) {
         console.error('Error fetching options:', e.message || 'Failed to fetch options');
     }
 };
 
-const populateForm = () => {
+const populateForm = async () => {
     if (props.student) {
-        originalMatricNumber.value = props.student.matric_number || '';
+        // Wait for next tick to ensure data is reactive
+        await nextTick();
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Convert proxy to raw object to access nested properties properly
+        const rawStudent = toRaw(props.student);
+        
+        
+        originalMatricNumber.value = rawStudent.matric_number || '';
         formData.value = {
-            matric_number: props.student.matric_number || '',
-            name: props.student.name || '',
-            email: props.student.email || '',
-            program_id: props.student.program?.id || props.student.program_id || null,
-            current_semester: props.student.current_semester || '',
-            department: props.student.department || null,
-            country: props.student.country || '',
-            supervisor_id: props.student.main_supervisor?.user_id || props.student.main_supervisor_id || null,
-            evaluation_type: props.student.evaluation_type || null,
-            co_supervisor_id: props.student.co_supervisor_id || null,
-            research_title: props.student.research_title || '',
-            is_postponed: props.student.is_postponed || false,
-            postponement_reason: props.student.postponement_reason || '',
+            matric_number: rawStudent.matric_number || '',
+            name: rawStudent.name || '',
+            email: rawStudent.email || '',
+            program_id: rawStudent.program?.id || rawStudent.program_id || null,
+            current_semester: rawStudent.current_semester || '',
+            department: rawStudent.department || null,
+            country: rawStudent.country || '',
+            supervisor_id: rawStudent.main_supervisor?.user_id || rawStudent.main_supervisor_id || null,
+            evaluation_type: rawStudent.evaluation_type || null,
+            research_title: rawStudent.research_title || '',
         };
+        
     }
 };
 
@@ -321,18 +296,15 @@ const resetForm = () => {
         country: '',
         supervisor_id: null,
         evaluation_type: null,
-        co_supervisor_id: null,
         research_title: '',
-        is_postponed: false,
-        postponement_reason: '',
     };
     originalMatricNumber.value = '';
     formErrors.value = {};
 };
 
-watch(() => props.dialog, (newVal) => {
+watch(() => props.dialog, async (newVal) => {
     if (newVal) {
-        populateForm();
+        await populateForm();
         if (enumsStore.enumsData === null) {
             enumsStore.fetchEnums();
         }
@@ -340,6 +312,13 @@ watch(() => props.dialog, (newVal) => {
         resetForm();
     }
 });
+
+// Additional watch for student data changes
+watch(() => props.student, async (newStudent) => {
+    if (props.dialog && newStudent) {
+        await populateForm();
+    }
+}, { deep: true });
 
 onMounted(() => {
     if (enumsStore.enumsData === null) {
