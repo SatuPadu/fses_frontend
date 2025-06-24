@@ -120,8 +120,6 @@ const sDrawer = ref(true);
         </v-btn>
       </div>
       <div>
-        <!-- Notification -->
-        <LayoutFullVerticalHeaderNotificationDD />
         <!-- User Profile -->
         <LayoutFullVerticalHeaderProfileDD />
       </div>

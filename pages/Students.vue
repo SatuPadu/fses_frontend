@@ -65,15 +65,12 @@
           <template v-slot:prepend>
             <v-icon :icon="ExclamationCircleIcon" color="error"></v-icon>
           </template>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <PermissionButton
+          <v-card-actions class="justify-start">
+            <v-btn
               color="error"
               text="Delete"
               :loading="loading"
               @click="confirmDeleteStudent"
-              module="students"
-              action="delete"
             />
             <v-btn text="Cancel" @click="showDeleteDialog = false"></v-btn>
           </v-card-actions>

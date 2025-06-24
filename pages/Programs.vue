@@ -65,13 +65,11 @@
             <v-icon :icon="ExclamationCircleIcon" color="error"></v-icon>
           </template>
           <v-card-actions class="justify-start">
-            <PermissionButton
+            <v-btn
               color="error"
               text="Delete"
               :loading="loading"
               @click="confirmDeleteProgram"
-              module="programs"
-              action="delete"
             />
             <v-btn text="Cancel" @click="showDeleteDialog = false"></v-btn>
           </v-card-actions>
