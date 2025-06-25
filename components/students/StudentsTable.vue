@@ -18,7 +18,7 @@
           <td class="border border-gray-300">{{ item.program?.program_name || '-' }}</td>
           <td class="border border-gray-300">{{ item.current_semester }}</td>
           <td class="border border-gray-300">{{ item.program?.department || '-' }}</td>
-          <td class="border border-gray-300">{{ item.main_supervisor?.name || '-' }}</td>
+          <td class="border border-gray-300">{{ getSupervisorDisplayName(item.main_supervisor) }}</td>
           <td v-if="canEditStudents || canDeleteStudents || canCreateNominations" class="border border-gray-300">
             <div class="d-flex justify-end">
               <v-btn 
@@ -102,6 +102,13 @@ const editStudent = (student: Student) => {
 
 const deleteStudent = (student: Student) => {
   emits('delete-student', student);
+};
+
+const getSupervisorDisplayName = (supervisor: any) => {
+  if (supervisor) {
+    return `${supervisor.title} ${supervisor.name}`;
+  }
+  return '-';
 };
 </script>
 

@@ -87,28 +87,31 @@
                     <v-col cols="12" sm="6">
                         <v-label class="font-weight-bold mb-1">Main Supervisor*</v-label>
                         <v-select
-                            v-model="formData.supervisor_id"
+                            v-model="formData.main_supervisor_id"
                             :items="lecturers"
-                            item-title="name"
-                            item-value="user_id"
+                            item-title="displayName"
+                            item-value="id"
                             density="compact"
                             variant="outlined"
-                            :error-messages="formErrors.supervisor_id"
+                            :error-messages="formErrors.main_supervisor_id"
                             :loading="loading"
                             required
                         ></v-select>
                     </v-col>
                     <v-col cols="12" sm="6">
-                        <v-label class="font-weight-bold mb-1">Co-Supervisor</v-label>
+                        <v-label class="font-weight-bold mb-1">Co-Supervisors</v-label>
                         <v-select
-                            v-model="formData.co_supervisor_id"
+                            v-model="formData.co_supervisor_ids"
                             :items="lecturers"
-                            item-title="name"
-                            item-value="user_id"
+                            item-title="displayName"
+                            item-value="id"
                             density="compact"
                             variant="outlined"
-                            :error-messages="formErrors.co_supervisor_id"
+                            :error-messages="formErrors.co_supervisor_ids"
                             :loading="loading"
+                            multiple
+                            chips
+                            closable-chips
                             clearable
                         ></v-select>
                     </v-col>
@@ -123,32 +126,6 @@
                             :loading="enumsStore.loading"
                             required
                         ></v-select>
-                    </v-col>
-                    <v-col cols="12" sm="6">
-                        <v-label class="font-weight-bold mb-1">Research Title</v-label>
-                        <v-text-field
-                            v-model="formData.research_title"
-                            density="compact"
-                            variant="outlined"
-                            :error-messages="formErrors.research_title"
-                        ></v-text-field>
-                    </v-col>
-                    <v-col cols="12" sm="6">
-                        <v-label class="font-weight-bold mb-1">Is Postponed</v-label>
-                        <v-switch
-                            v-model="formData.is_postponed"
-                            :error-messages="formErrors.is_postponed"
-                        ></v-switch>
-                    </v-col>
-                    <v-col cols="12" v-if="formData.is_postponed">
-                        <v-label class="font-weight-bold mb-1">Postponement Reason</v-label>
-                        <v-textarea
-                            v-model="formData.postponement_reason"
-                            density="compact"
-                            variant="outlined"
-                            :error-messages="formErrors.postponement_reason"
-                            rows="3"
-                        ></v-textarea>
                     </v-col>
                 </v-row>
             </v-card-text>
@@ -172,7 +149,6 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { useEnumsStore } from '~/stores/enums';
-import PermissionButton from '~/components/shared/PermissionButton.vue';
 
 const userManagement = useUserManagement();
 const enumsStore = useEnumsStore();
@@ -204,12 +180,9 @@ const formData = ref({
     current_semester: '',
     department: null as string | null,
     country: '',
-    supervisor_id: null as number | null,
+    main_supervisor_id: null as number | null,
     evaluation_type: null as string | null,
-    co_supervisor_id: null as number | null,
-    research_title: '',
-    is_postponed: false,
-    postponement_reason: '',
+    co_supervisor_ids: [] as number[],
 });
 
 // Form validation
@@ -235,7 +208,7 @@ const validateForm = () => {
     if (!formData.value.program_id) errors.program_id = 'Program is required';
     if (!formData.value.current_semester) errors.current_semester = 'Current semester is required';
     if (!formData.value.department) errors.department = 'Department is required';
-    if (!formData.value.supervisor_id) errors.supervisor_id = 'Main supervisor is required';
+    if (!formData.value.main_supervisor_id) errors.main_supervisor_id = 'Main supervisor is required';
     if (!formData.value.evaluation_type) errors.evaluation_type = 'Evaluation type is required';
 
     formErrors.value = errors;
@@ -250,7 +223,10 @@ const fetchOptions = async () => {
         ]);
         
         programs.value = programsData;
-        lecturers.value = lecturersData;
+        lecturers.value = lecturersData.map((lecturer: any) => ({
+            ...lecturer,
+            displayName: `${lecturer.title ? lecturer.title + ' ' : ''}${lecturer.name}`.trim()
+        }));
     } catch (e: any) {
         console.error('Error fetching options:', e.message || 'Failed to fetch options');
     }
@@ -265,7 +241,15 @@ const handleSubmit = async () => {
     formErrors.value = {};
 
     try {
-        await userManagement.createStudent(formData.value);
+        // Prepare the data for submission
+        const submitData = {
+            ...formData.value,
+            co_supervisors: formData.value.co_supervisor_ids || []
+        };
+
+        console.log('Submitting student data:', submitData);
+        
+        await userManagement.createStudent(submitData);
         emits('student-added');
         toggleDialog();
     } catch (error: any) {
@@ -288,12 +272,9 @@ const resetForm = () => {
         current_semester: '',
         department: null,
         country: '',
-        supervisor_id: null,
+        main_supervisor_id: null,
         evaluation_type: null,
-        co_supervisor_id: null,
-        research_title: '',
-        is_postponed: false,
-        postponement_reason: '',
+        co_supervisor_ids: [],
     };
     formErrors.value = {};
 };

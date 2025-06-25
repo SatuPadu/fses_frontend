@@ -88,15 +88,32 @@
                     <v-col cols="12" sm="6">
                         <v-label class="font-weight-bold mb-1">Main Supervisor*</v-label>
                         <v-select
-                            v-model="formData.supervisor_id"
+                            v-model="formData.main_supervisor_id"
                             :items="lecturers"
                             item-title="displayName"
-                            item-value="user_id"
+                            item-value="id"
                             density="compact"
                             variant="outlined"
-                            :error-messages="formErrors.supervisor_id"
+                            :error-messages="formErrors.main_supervisor_id"
                             :loading="loading"
                             required
+                        ></v-select>
+                    </v-col>
+                    <v-col cols="12" sm="6">
+                        <v-label class="font-weight-bold mb-1">Co-Supervisors</v-label>
+                        <v-select
+                            v-model="formData.co_supervisor_ids"
+                            :items="lecturers"
+                            item-title="displayName"
+                            item-value="id"
+                            density="compact"
+                            variant="outlined"
+                            :error-messages="formErrors.co_supervisor_ids"
+                            :loading="loading"
+                            multiple
+                            chips
+                            closable-chips
+                            clearable
                         ></v-select>
                     </v-col>
                     <v-col cols="12" sm="6">
@@ -178,7 +195,8 @@ const formData = ref({
     current_semester: '',
     department: null as string | null,
     country: '',
-    supervisor_id: null as number | null,
+    main_supervisor_id: null as number | null,
+    co_supervisor_ids: [] as number[],
     evaluation_type: null as string | null,
     research_title: '',
 });
@@ -211,7 +229,7 @@ const validateForm = () => {
     if (!formData.value.program_id) errors.program_id = 'Program is required';
     if (!formData.value.current_semester) errors.current_semester = 'Current semester is required';
     if (!formData.value.department) errors.department = 'Department is required';
-    if (!formData.value.supervisor_id) errors.supervisor_id = 'Main supervisor is required';
+    if (!formData.value.main_supervisor_id) errors.main_supervisor_id = 'Main supervisor is required';
     if (!formData.value.evaluation_type) errors.evaluation_type = 'Evaluation type is required';
 
     formErrors.value = errors;
@@ -254,7 +272,10 @@ const populateForm = async () => {
             current_semester: rawStudent.current_semester || '',
             department: rawStudent.department || null,
             country: rawStudent.country || '',
-            supervisor_id: rawStudent.main_supervisor?.user_id || rawStudent.main_supervisor_id || null,
+            main_supervisor_id: rawStudent.main_supervisor?.user_id || rawStudent.main_supervisor_id || null,
+            co_supervisor_ids: rawStudent.co_supervisors?.map((supervisor: any) => 
+                supervisor.lecturer?.user_id || supervisor.lecturer_id
+            ).filter((id: any) => id !== null && id !== undefined) || [],
             evaluation_type: rawStudent.evaluation_type || null,
             research_title: rawStudent.research_title || '',
         };
@@ -276,7 +297,15 @@ const handleSubmit = async () => {
     formErrors.value = {};
 
     try {
-        await userManagement.updateStudent(props.student.id.toString(), formData.value);
+        // Prepare the data for submission
+        const submitData = {
+            ...formData.value,
+            co_supervisors: formData.value.co_supervisor_ids || []
+        };
+
+        console.log('Submitting student update data:', submitData);
+        
+        await userManagement.updateStudent(props.student.id.toString(), submitData);
         emits('student-updated');
         toggleDialog();
     } catch (error: any) {
@@ -299,7 +328,8 @@ const resetForm = () => {
         current_semester: '',
         department: null,
         country: '',
-        supervisor_id: null,
+        main_supervisor_id: null,
+        co_supervisor_ids: [],
         evaluation_type: null,
         research_title: '',
     };

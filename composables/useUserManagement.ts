@@ -342,16 +342,26 @@ export const useUserManagement = () => {
     loading.value = true;
     error.value = null;
     try {
+      console.log('Creating student with data:', studentData);
+      console.log('API URL:', `${import.meta.env.API_BASE_URL}/students`);
+      
+      const headers = getHeaders();
+      console.log('Headers:', headers);
+      
       const response = await fetch(`${import.meta.env.API_BASE_URL}/students`, {
         method: 'POST',
         headers: {
-          ...getHeaders(),
+          ...headers,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(studentData)
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
       const data = await response.json();
+      console.log('Response data:', data);
 
       if (data.error) {
         throw new Error(data.error.message || 'Failed to create student');
@@ -363,6 +373,12 @@ export const useUserManagement = () => {
 
       throw new Error(data.message || 'Failed to create student');
     } catch (e: any) {
+      console.error('Create student error:', e);
+      console.error('Error details:', {
+        message: e.message,
+        stack: e.stack,
+        name: e.name
+      });
       error.value = e.message || 'Failed to create student';
       throw e;
     } finally {
