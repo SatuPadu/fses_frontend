@@ -4,9 +4,9 @@ import sidebarItems from "@/components/layout/full/vertical-sidebar/sidebarItem"
 import { Menu2Icon } from "vue-tabler-icons";
 import { usePermissions } from "~/composables/usePermissions";
 
-const { hasPermission, isInitialized } = usePermissions();
+const { hasPermission, isInitialized, userRoles } = usePermissions();
 
-// Filter sidebar items based on permissions
+// Filter sidebar items based on permissions and roles
 const sidebarMenu = computed(() => {
   const filteredItems: typeof sidebarItems = [];
   let lastHeader: string | null = null;
@@ -23,15 +23,29 @@ const sidebarMenu = computed(() => {
       shouldShowItem = false; // We'll determine this after checking the next items
     } else {
       // For regular items
-      if (!item.requiredPermission) {
+      if (!item.requiredPermission && !item.requiredRole && !item.requiredRoles) {
         shouldShowItem = true;
       } else if (item.requiredPermission === "dashboard:view") {
         shouldShowItem = true;
       } else if (!isInitialized.value) {
         shouldShowItem = false;
       } else {
-        const [module, action] = item.requiredPermission.split(':');
-        shouldShowItem = hasPermission(module, action);
+        // Check permissions
+        let hasPermissionAccess = true;
+        if (item.requiredPermission) {
+          const [module, action] = item.requiredPermission.split(':');
+          hasPermissionAccess = hasPermission(module, action);
+        }
+        
+        // Check roles
+        let hasRoleAccess = true;
+        if (item.requiredRole) {
+          hasRoleAccess = userRoles.value.some(role => role.role_name === item.requiredRole);
+        } else if (item.requiredRoles) {
+          hasRoleAccess = userRoles.value.some(role => item.requiredRoles!.includes(role.role_name));
+        }
+        
+        shouldShowItem = hasPermissionAccess && hasRoleAccess;
       }
     }
 

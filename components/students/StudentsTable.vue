@@ -55,7 +55,7 @@
                 color="error"
               />
               <v-btn
-                v-if="canCreateNominations && (!item.evaluations || item.evaluations.length === 0)"
+                v-if="canCreateNominations && (!item.evaluations || item.evaluations.length === 0) && item?.user_roles?.includes('ResearchSupervisor')"
                 icon="mdi-plus"
                 variant="text"
                 @click="$emit('add-nomination', item)"
@@ -72,6 +72,7 @@
 import { ref, toRefs, computed } from 'vue';
 import { usePermissions } from '~/composables/usePermissions';
 import { useEnumsStore } from '~/stores/enums';
+import { useAuthStore } from '~/composables/useAuth';
 import type { Student } from '~/types/global';
 
 const props = defineProps<{
@@ -87,6 +88,7 @@ const emits = defineEmits(['update-options', 'edit-student', 'delete-student', '
 
 const { canEditStudents, canDeleteStudents, canCreateNominations, isOfficeAssistant } = usePermissions();
 const enumsStore = useEnumsStore();
+const authStore = useAuthStore();
 
 const headers = computed(() => {
   const baseHeaders: Array<{
@@ -139,6 +141,16 @@ const getSupervisorDisplayName = (supervisor: any) => {
     return `${supervisor.title} ${supervisor.name}`;
   }
   return '-';
+};
+
+const isStudentSupervisor = (student: Student) => {
+  // Check if the current user is the main supervisor for this student
+  if (!authStore.user || !student.main_supervisor) {
+    return false;
+  }
+  
+  // Compare the current user's ID with the student's main supervisor ID
+  return authStore.user.id === student.main_supervisor.user_id;
 };
 </script>
 

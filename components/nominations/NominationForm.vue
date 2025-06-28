@@ -73,7 +73,7 @@
             <div>
               <v-row>
                 <v-col cols="12" md="4">
-                  <v-select
+                  <v-autocomplete
                     v-model="selectedExaminer1"
                     :items="availableExaminers1"
                     item-title="displayName"
@@ -84,10 +84,11 @@
                     :rules="[v => !!v || 'Examiner 1 is required']"
                     :loading="loadingExaminerSuggestions"
                     :disabled="availableExaminers1.length === 0"
+                    clearable
                   />
                 </v-col>
                 <v-col cols="12" md="4">
-                  <v-select
+                  <v-autocomplete
                     v-model="selectedExaminer2"
                     :items="availableExaminers2"
                     item-title="displayName"
@@ -98,10 +99,11 @@
                     :rules="[v => !!v || 'Examiner 2 is required']"
                     :loading="loadingExaminerSuggestions"
                     :disabled="availableExaminers2.length === 0"
+                    clearable
                   />
                 </v-col>
                 <v-col cols="12" md="4">
-                  <v-select
+                  <v-autocomplete
                     v-model="selectedExaminer3"
                     :items="availableExaminers3"
                     item-title="displayName"
@@ -112,6 +114,7 @@
                     :rules="[v => !!v || 'Examiner 3 is required']"
                     :loading="loadingExaminerSuggestions"
                     :disabled="availableExaminers3.length === 0"
+                    clearable
                   />
                 </v-col>
               </v-row>

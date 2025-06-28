@@ -22,6 +22,8 @@ export interface menu {
   subCaption?: string;
   external?: boolean;
   requiredPermission?: string;
+  requiredRole?: string;
+  requiredRoles?: string[];
 }
 
 const sidebarItem: menu[] = [
@@ -39,6 +41,7 @@ const sidebarItem: menu[] = [
     to: "/users",
     external: false,
     requiredPermission: "users:view",
+    requiredRoles: ["OfficeAssistant", "PGAM"],
   },
   {
     title: "Lecturers",

@@ -373,6 +373,7 @@ const handleSubmit = async () => {
 
     try {
         // Prepare the data for submission
+        
         const submitData = {
             ...formData.value,
             co_supervisors: formData.value.co_supervisor_ids || []

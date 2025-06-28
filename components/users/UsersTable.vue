@@ -13,9 +13,7 @@
       <tr>
         <td class="border border-gray-300">{{ (page - 1) * itemsPerPage + index + 1 }}</td>
         <td class="border border-gray-300">
-          <a @click.prevent="showDetails(item)" href="#" class="text-primary_text hover:underline">
-            {{ item.staff_number }}
-          </a>
+          {{ item.staff_number }}
         </td>
         <td class="border border-gray-300">{{ item.lecturer?.title || '-' }}</td>
         <td class="border border-gray-300">{{ item.name }}</td>
@@ -43,8 +41,14 @@
             </template>
           </v-tooltip>
         </td>
-        <td v-if="canEditUsers || canDeleteUsers" class="border border-gray-300">
+        <td class="border border-gray-300">
           <div class="d-flex justify-end">
+            <v-btn 
+              icon="mdi-eye" 
+              variant="text" 
+              @click="showDetails(item)"
+              color="info"
+            />
             <v-btn 
               v-if="canEditUsers"
               icon="mdi-pencil" 
@@ -100,12 +104,8 @@ const headers = computed(() => {
     { title: 'Email', key: 'email', sortable: true },
     { title: 'Phone', key: 'lecturer.phone', sortable: true },
     { title: 'Status', key: 'is_active', sortable: true },
+    { title: 'Actions', key: 'actions', sortable: false, align: 'end' },
   ];
-
-  // Only add Actions column if user has edit or delete permissions
-  if (canEditUsers.value || canDeleteUsers.value) {
-    baseHeaders.push({ title: 'Actions', key: 'actions', sortable: false, align: 'end' });
-  }
 
   return baseHeaders;
 });
