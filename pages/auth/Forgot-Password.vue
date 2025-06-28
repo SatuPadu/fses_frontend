@@ -31,17 +31,6 @@
                     ></v-text-field>
                   </v-col>
 
-                  <v-col v-if="error" cols="12" class="pt-0">
-                    <v-alert
-                      type="error"
-                      variant="tonal"
-                      density="compact"
-                      class="mb-2"
-                    >
-                      {{ error }}
-                    </v-alert>
-                  </v-col>
-
                   <v-col cols="12" class="pt-0">
                     <v-btn
                       color="primary"
@@ -80,6 +69,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { useToast } from '@/composables/useToast'
 
 definePageMeta({
   layout: "blank",
@@ -87,6 +77,7 @@ definePageMeta({
 
 const router = useRouter()
 const auth = useAuth()
+const toast = useToast()
 const form = ref()
 const email = ref('')
 const error = ref('')
@@ -110,12 +101,15 @@ const handleSubmit = async () => {
     const result = await auth.sendResetLink(email.value)
     
     if (result.success) {
+      toast.success('Reset Link Sent', 'Password reset link has been sent to your email')
       router.push('/auth/forgot-password-email-sent')
     } else {
       error.value = result.error || 'Failed to send reset link. Please try again.'
+      toast.error('Failed to Send', 'Failed to send reset link. Please try again.')
     }
   } catch (err: any) {
     error.value = err?.message || 'An error occurred. Please try again.'
+    toast.error('Error', 'An error occurred. Please try again.')
   } finally {
     loading.value = false
   }

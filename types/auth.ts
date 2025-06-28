@@ -47,6 +47,7 @@ export interface LoginCredentials {
 export interface PasswordChangePayload {
   password: string;
   password_confirmation: string;
+  token?: string;
 }
 
 export interface LoginResponse {

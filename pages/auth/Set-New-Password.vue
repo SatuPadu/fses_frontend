@@ -120,9 +120,11 @@ definePageMeta({
 
 import { reactive, computed } from 'vue';
 import { useAuth } from '@/composables/useAuth';
+import { useToast } from '@/composables/useToast';
 import type { PasswordChangePayload } from '@/types/auth';
 
 const auth = useAuth();
+const toast = useToast();
 const router = useRouter();
 
 // Form data with reactive object
@@ -201,11 +203,15 @@ const handleSetPassword = async () => {
 
     if (!result) {
       state.errorMessage = 'Failed to set new password. Please try again.';
+      toast.error('Password Change Failed', 'Failed to set new password. Please try again.');
+    } else {
+      toast.success('Password Set Successfully', 'Your new password has been set successfully');
     }
   } catch (err: any) {
     // Error handling
     console.error('Password change error:', err);
     state.errorMessage = err?.message || 'An unexpected error occurred.';
+    toast.error('Password Change Error', 'An unexpected error occurred while setting your password');
   } finally {
     // Always reset loading state
     state.loading = false;

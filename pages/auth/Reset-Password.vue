@@ -57,29 +57,6 @@
                     placeholder="Confirm new password"
                   ></v-text-field>
                 </v-col>
-
-                <v-col v-if="state.errorMessage" cols="12" class="pt-0">
-                  <v-alert
-                    type="error"
-                    variant="tonal"
-                    density="compact"
-                    class="mb-2"
-                  >
-                    {{ state.errorMessage }}
-                  </v-alert>
-                </v-col>
-
-                <v-col v-if="state.successMessage" cols="12" class="pt-0">
-                  <v-alert
-                    type="success"
-                    variant="tonal"
-                    density="compact"
-                    class="mb-2"
-                  >
-                    {{ state.successMessage }}
-                  </v-alert>
-                </v-col>
-
                 <v-col cols="12" class="pt-0">
                   <v-btn
                     color="primary"

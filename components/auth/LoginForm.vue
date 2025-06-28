@@ -25,17 +25,6 @@
       ></v-text-field>
     </v-col>
 
-    <v-col v-if="error" cols="12" class="pt-0">
-      <v-alert
-        :type="accountLocked ? 'warning' : 'error'"
-        variant="tonal"
-        density="compact"
-        class="mb-2"
-      >
-        {{ error }}
-      </v-alert>
-    </v-col>
-
     <v-col cols="12" class="pt-0">
       <v-btn
         color="primary"
