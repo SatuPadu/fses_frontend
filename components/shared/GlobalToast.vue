@@ -5,7 +5,7 @@
       :key="toast.id"
       :model-value="true"
       :color="getToastColor(toast.type)"
-      :timeout="toast.persistent ? -1 : (toast.timeout || 5000)"
+      :timeout="toast.persistent ? -1 : (toast.timeout || 2000)"
       location="top right"
       :multi-line="!!toast.message"
       class="toast-item"
@@ -77,16 +77,23 @@ const getToastIcon = (type: string) => {
   top: 20px;
   right: 20px;
   z-index: 9999;
-  pointer-events: none;
 }
 
 .toast-item {
-  pointer-events: auto;
   margin-bottom: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .toast-item:not(:last-child) {
   position: relative;
   transform: translateY(0);
+}
+
+:deep(.v-snackbar__content) {
+  pointer-events: auto;
+}
+
+:deep(.v-btn) {
+  pointer-events: auto;
 }
 </style> 

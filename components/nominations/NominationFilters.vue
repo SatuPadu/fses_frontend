@@ -86,19 +86,6 @@
             :disabled="academicYearItems.length === 0"
           ></v-select>
         </v-col>
-
-        <!-- Postponed Filter -->
-        <v-col cols="12" md="6">
-          <v-select
-            v-model="filters.is_postponed"
-            :items="postponedItems"
-            label="Postponed"
-            density="compact"
-            variant="outlined"
-            clearable
-            hide-details
-          ></v-select>
-        </v-col>
       </v-row>
     </v-card-text>
     <v-card-actions class="pa-4 pt-0">
@@ -137,7 +124,6 @@ const filters = reactive({
   department: null as string | null,
   semester: null as string | null,
   academic_year: null as string | null,
-  is_postponed: null as string | null,
 });
 
 const semesterItems = [
@@ -151,11 +137,6 @@ const semesterItems = [
 
 // Academic years loaded from API
 const academicYearItems = ref<Array<{ title: string; value: string }>>([]);
-
-const postponedItems = [
-  { title: 'Yes', value: 'true' },
-  { title: 'No', value: 'false' },
-];
 
 const departmentItems = computed(() => {
   const options = enumsStore.getDepartmentOptions();
@@ -208,7 +189,6 @@ const applyFilters = () => {
   if (filters.department) activeFilters.department = filters.department;
   if (filters.semester) activeFilters.semester = filters.semester;
   if (filters.academic_year) activeFilters.academic_year = filters.academic_year;
-  if (filters.is_postponed) activeFilters.is_postponed = filters.is_postponed;
   
   emits('filters-updated', activeFilters);
 };
@@ -220,7 +200,6 @@ const resetFilters = () => {
   filters.department = null;
   filters.semester = null;
   filters.academic_year = null;
-  filters.is_postponed = null;
   emits('filters-updated', {});
 };
 

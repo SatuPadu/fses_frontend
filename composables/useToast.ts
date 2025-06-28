@@ -16,7 +16,7 @@ export const useToast = () => {
     const id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
     const newToast: ToastMessage = {
       id,
-      timeout: 5000, // Default 5 seconds
+      timeout: 2000, // Default 2 seconds
       ...toast,
     };
     
@@ -135,7 +135,7 @@ export const useToast = () => {
       type: 'error',
       title: errorTitle,
       message: errorMessage,
-      timeout: 7000, // Longer timeout for errors
+      timeout: 3000, // Longer timeout for errors
     });
   };
 
@@ -157,7 +157,7 @@ export const useToast = () => {
       type: 'success',
       title: successTitle,
       message: successMessage,
-      timeout: 5000,
+      timeout: 2000,
     });
   };
 

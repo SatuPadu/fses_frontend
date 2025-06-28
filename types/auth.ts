@@ -12,6 +12,7 @@ export interface User {
   is_password_updated: boolean;
   created_at: string;
   updated_at: string;
+  roles?: Role[];
 }
 
 export interface Permission {

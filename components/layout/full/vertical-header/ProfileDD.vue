@@ -102,17 +102,7 @@ export default {
           icon: 'UserIcon',
           title: 'My Profile',
           value: 'item1',
-        },
-        {
-          icon: 'MailIcon',
-          title: 'My Account',
-          value: 'item2',
-        },
-        {
-          icon: 'ListCheckIcon',
-          title: 'My Task',
-          value: 'item3',
-        },
+        }
       ],
     };
   },

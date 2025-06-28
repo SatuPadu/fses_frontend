@@ -6,6 +6,7 @@ import {
   FileImportIcon,
   AwardIcon,
   LockIcon,
+  UserCheckIcon,
 } from "vue-tabler-icons";
 
 export interface menu {
@@ -52,13 +53,6 @@ const sidebarItem: menu[] = [
     requiredPermission: "lecturers:view",
   },
   {
-    title: "Students",
-    icon: UserIcon,
-    to: "/students",
-    external: false,
-    requiredPermission: "students:view",
-  },
-  {
     title: "Programs",
     icon: BookIcon,
     to: "/programs",
@@ -66,11 +60,26 @@ const sidebarItem: menu[] = [
     requiredPermission: "programs:view",
   },
   {
+    title: "Students",
+    icon: UserIcon,
+    to: "/students",
+    external: false,
+    requiredPermission: "students:view",
+  },
+  {
     title: "Examiner Nominations",
     icon: AwardIcon,
     to: "/nominations",
     external: false,
     requiredPermission: "nominations:view",
+  },
+  {
+    title: "Assign Chairpersons",
+    icon: UserCheckIcon,
+    to: "/assign-chairpersons",
+    external: false,
+    requiredPermission: "chairpersons:assign",
+    requiredRoles: ["ProgramCoordinator", "PGAM"],
   },
   {
     title: "Lock Nominations",

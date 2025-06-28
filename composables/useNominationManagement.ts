@@ -370,6 +370,75 @@ export const useNominationManagement = () => {
     }
   };
 
+  const getChairpersonSuggestions = async () => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await fetch(`${import.meta.env.API_BASE_URL}/evaluations/assignments/chairperson-suggestions`, {
+        method: 'GET',
+        headers: {
+          ...getHeaders(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error.message || 'Failed to fetch chairperson suggestions');
+      }
+
+      if (data.success) {
+        return data;
+      }
+
+      throw new Error(data.message || 'Failed to fetch chairperson suggestions');
+    } catch (e: any) {
+      error.value = e.message || 'Failed to fetch chairperson suggestions';
+      throw e;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const saveChairpersonAssignments = async (assignments: Array<{
+    evaluation_id: number;
+    chairperson_id: number;
+    is_auto_assigned: boolean;
+  }>) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await fetch(`${import.meta.env.API_BASE_URL}/evaluations/assignments`, {
+        method: 'POST',
+        headers: {
+          ...getHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          assignments: assignments
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error.message || 'Failed to save chairperson assignments');
+      }
+
+      if (data.success) {
+        return data;
+      }
+
+      throw new Error(data.message || 'Failed to save chairperson assignments');
+    } catch (e: any) {
+      error.value = e.message || 'Failed to save chairperson assignments';
+      throw e;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     loading,
     error,
@@ -383,5 +452,7 @@ export const useNominationManagement = () => {
     getExaminer2Suggestions,
     getExaminer3Suggestions,
     getAcademicYears,
+    getChairpersonSuggestions,
+    saveChairpersonAssignments,
   };
 }; 

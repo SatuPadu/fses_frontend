@@ -12,14 +12,16 @@
 
         <div class="">
           <h2 class="text-xl font-bold mb-1">{{ userName }}</h2>
-          <div class="flex">
+          <div class="flex flex-wrap gap-2">
             <v-chip
-              :color="chipColor"
+              v-for="role in userRoleOptions"
+              :key="role.value"
               label
+              :color="'primary'"
               size="small"
               class="px-3"
             >
-              {{ roleName }}
+              {{ role.title }}
             </v-chip>
           </div>
         </div>
@@ -51,6 +53,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useEnumsStore } from '~/stores/enums';
+import { usePermissions } from '~/composables/usePermissions';
 import type { User } from '@/types/auth';
 
 // Define props with TypeScript interface
@@ -73,9 +77,12 @@ const props = defineProps({
   },
 });
 
+// Get enums store and permissions
+const enumsStore = useEnumsStore();
+
 // Computed properties
 const userName = computed(() => props.user?.name || '');
-const chipColor = computed(() => props.isAdmin ? 'error' : 'primary');
+const userRoleOptions = computed(() => enumsStore.getMyRoleOptions());
 
 // Helper function to format date
 const formatDate = (dateString: string | undefined | null): string => {

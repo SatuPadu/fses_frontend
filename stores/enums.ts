@@ -85,9 +85,9 @@ export const useEnumsStore = defineStore('enums', () => {
     return Object.entries(enumsData.value.roles)
       .filter(([value, title]) => userRoleNames.includes(value))
       .map(([value, title]) => ({
-        title,
-        value
-      }));
+      title,
+      value
+    }));
   };
 
   const getNominationStatusOptions = () => {

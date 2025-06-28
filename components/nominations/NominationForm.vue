@@ -208,7 +208,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, toRaw, onMounted, computed } from 'vue';
+import { ref, watch, toRaw, computed } from 'vue';
 import { useNominationManagement } from '~/composables/useNominationManagement';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { useToast } from '~/composables/useToast';
@@ -524,6 +524,7 @@ const submitForm = async () => {
       student_id: props.nominationData?.student?.id || 0,
       semester: Number(props.nominationData?.student?.current_semester) || 0,
       academic_year: (academicYear.value as any)?.value || academicYear.value || '',
+      research_title: researchTitle.value?.trim() || '',
       examiner1_id: selectedExaminer1.value || undefined,
       examiner2_id: selectedExaminer2.value || undefined,
       examiner3_id: selectedExaminer3.value || undefined,
