@@ -92,7 +92,7 @@ export const usePermissions = () => {
   );
 
   const isSupervisor = computed(() => 
-    userRoles.value.some(role => role.role_name === 'Supervisor')
+    userRoles.value.some(role => role.role_name === 'ResearchSupervisor')
   );
 
   const isCoSupervisor = computed(() => 

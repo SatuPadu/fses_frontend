@@ -19,8 +19,27 @@
           <td class="border border-gray-300">{{ item.current_semester }}</td>
           <td class="border border-gray-300">{{ item.program?.department || '-' }}</td>
           <td class="border border-gray-300">{{ getSupervisorDisplayName(item.main_supervisor) }}</td>
-          <td v-if="canEditStudents || canDeleteStudents || canCreateNominations" class="border border-gray-300">
+          <td v-if="!isOfficeAssistant" class="border border-gray-300">
+            <v-chip
+              v-for="role in item.user_roles"
+              :key="role"
+              class="mr-1 mb-1"
+              size="small"
+              color="primary"
+              variant="outlined"
+            >
+              {{ formatRoleName(role) }}
+            </v-chip>
+            <span v-if="!item.user_roles || item.user_roles.length === 0">-</span>
+          </td>
+          <td class="border border-gray-300">
             <div class="d-flex justify-end">
+              <v-btn 
+                icon="mdi-eye" 
+                variant="text" 
+                @click="viewStudentDetails(item)"
+                color="info"
+              />
               <v-btn 
                 v-if="canEditStudents"
                 icon="mdi-pencil" 
@@ -52,6 +71,7 @@
 <script setup lang="ts">
 import { ref, toRefs, computed } from 'vue';
 import { usePermissions } from '~/composables/usePermissions';
+import { useEnumsStore } from '~/stores/enums';
 import type { Student } from '~/types/global';
 
 const props = defineProps<{
@@ -63,9 +83,10 @@ const props = defineProps<{
 }>();
 
 const { students, loading, totalItems, itemsPerPage, page } = toRefs(props);
-const emits = defineEmits(['update-options', 'edit-student', 'delete-student', 'add-nomination']);
+const emits = defineEmits(['update-options', 'edit-student', 'delete-student', 'add-nomination', 'view-student-details']);
 
-const { canEditStudents, canDeleteStudents, canCreateNominations } = usePermissions();
+const { canEditStudents, canDeleteStudents, canCreateNominations, isOfficeAssistant } = usePermissions();
+const enumsStore = useEnumsStore();
 
 const headers = computed(() => {
   const baseHeaders: Array<{
@@ -81,19 +102,28 @@ const headers = computed(() => {
     { title: 'Program', key: 'program.program_name', sortable: true },
     { title: 'Current Semester', key: 'current_semester', sortable: true },
     { title: 'Department', key: 'program.department', sortable: true },
-    { title: 'Supervisor', key: 'main_supervisor.name', sortable: true },
+    { title: 'Research Supervisor', key: 'main_supervisor.name', sortable: true },
+    ...(isOfficeAssistant.value ? [] : [{ title: 'My Role', key: 'user_roles', sortable: true }]),
+    { title: 'Actions', key: 'actions', sortable: false, align: 'end' },
   ];
-
-  // Add Actions column if user has edit/delete permissions or can create nominations
-  if (canEditStudents.value || canDeleteStudents.value || canCreateNominations.value) {
-    baseHeaders.push({ title: 'Actions', key: 'actions', sortable: false, align: 'end' });
-  }
 
   return baseHeaders;
 });
 
+const formatRoleName = (roleValue: string): string => {
+  if (!enumsStore.enumsData?.roles) return roleValue;
+  
+  // Get the formatted title from the enums
+  const roleTitle = enumsStore.enumsData.roles[roleValue];
+  return roleTitle || roleValue;
+};
+
 const handleOptionsUpdate = (options: any) => {
   emits('update-options', options);
+};
+
+const viewStudentDetails = (student: Student) => {
+  emits('view-student-details', student);
 };
 
 const editStudent = (student: Student) => {

@@ -12,6 +12,7 @@
             clearable
             hide-details
             @keyup.enter="applyFilters"
+            @blur="filters.program_code = filters.program_code?.trim()"
           ></v-text-field>
         </v-col>
 

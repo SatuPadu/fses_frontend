@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { EnumsData, EnumsResponse } from '~/types/global';
 import { useAuthStore } from '~/composables/useAuth';
+import { usePermissions } from '~/composables/usePermissions';
 
 export const useEnumsStore = defineStore('enums', () => {
   const enumsData = ref<EnumsData | null>(null);
@@ -75,6 +76,20 @@ export const useEnumsStore = defineStore('enums', () => {
     }));
   };
 
+  const getMyRoleOptions = () => {
+    if (!enumsData.value?.roles) return [];
+    
+    const { userRoles } = usePermissions();
+    const userRoleNames = userRoles.value.map(role => role.role_name);
+    
+    return Object.entries(enumsData.value.roles)
+      .filter(([value, title]) => userRoleNames.includes(value))
+      .map(([value, title]) => ({
+        title,
+        value
+      }));
+  };
+
   const getNominationStatusOptions = () => {
     if (!enumsData.value?.nominationStatus) return [];
     return Object.entries(enumsData.value.nominationStatus).map(([value, title]) => ({
@@ -115,6 +130,7 @@ export const useEnumsStore = defineStore('enums', () => {
     getDepartmentOptions,
     getTitleOptions,
     getRoleOptions,
+    getMyRoleOptions,
     getNominationStatusOptions,
     getEvaluationTypeOptions,
     getProgramOptions,

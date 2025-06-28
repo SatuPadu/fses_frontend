@@ -67,7 +67,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
     
     const hierarchyLevels = {
       'OfficeAssistant': 1,
-      'Supervisor': 2,
+      'ResearchSupervisor': 2,
       'CoSupervisor': 2,
       'ProgramCoordinator': 4,
       'Chairperson': 5,

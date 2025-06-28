@@ -11,6 +11,7 @@
             clearable
             hide-details
             @keyup.enter="applyFilters"
+            @blur="filters.staff_number = filters.staff_number?.trim()"
           ></v-text-field>
         </v-col>
 
@@ -23,6 +24,7 @@
             clearable
             hide-details
             @keyup.enter="applyFilters"
+            @blur="filters.name = filters.name?.trim()"
           ></v-text-field>
         </v-col>
 
@@ -35,6 +37,7 @@
             clearable
             hide-details
             @keyup.enter="applyFilters"
+            @blur="filters.email = filters.email?.trim()"
           ></v-text-field>
         </v-col>
 
@@ -47,6 +50,7 @@
             clearable
             hide-details
             @keyup.enter="applyFilters"
+            @blur="filters.title = filters.title?.trim()"
           ></v-text-field>
         </v-col>
 
@@ -72,6 +76,7 @@
             clearable
             hide-details
             @keyup.enter="applyFilters"
+            @blur="filters.external_institutes = filters.external_institutes?.trim()"
           ></v-text-field>
         </v-col>
       </v-row>

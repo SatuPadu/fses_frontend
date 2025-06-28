@@ -24,7 +24,7 @@
           <!-- Modern File Upload Area -->
           <div 
             class="file-upload-area"
-            :class="{ 'drag-over': isDragOver, 'has-file': file }"
+            :class="{ 'drag-over': isDragOver, 'has-file': file, 'disabled': isImportInProgress }"
             @drop="handleDrop"
             @dragover="handleDragOver"
             @dragleave="handleDragLeave"
@@ -35,6 +35,7 @@
               type="file"
               accept=".csv,.xlsx,.xls"
               @change="handleFileSelect"
+              :disabled="isImportInProgress"
               style="display: none"
             />
             
@@ -65,6 +66,7 @@
                     variant="text"
                     size="small"
                     @click.stop="clearFile"
+                    :disabled="isImportInProgress"
                     color="error"
                   ></v-btn>
                 </div>
@@ -85,15 +87,15 @@
           <div class="text-center mt-6">
             <v-btn
               @click="handleFileUpload"
-              :disabled="!file || loading"
-              :loading="loading"
+              :disabled="!file || isImportInProgress"
+              :loading="isImportInProgress"
               color="primary"
               variant="flat"
               size="large"
               class="px-8"
               prepend-icon="mdi-upload"
             >
-              {{ loading ? 'Uploading...' : 'Start Import' }}
+              {{ isImportInProgress ? 'Uploading...' : 'Start Import' }}
             </v-btn>
           </div>
         </v-card-text>
@@ -140,7 +142,7 @@
             </v-alert>
 
             <!-- Summary -->
-            <div v-if="summary" class="mb-6">
+            <div v-if="summary && Object.keys(summary).length > 0" class="mb-6">
               <h3 class="text-h6 font-weight-medium mb-4">Import Summary</h3>
               <v-row>
                 <v-col 
@@ -164,34 +166,23 @@
                 <v-icon icon="mdi-alert-circle" class="mr-2"></v-icon>
                 Import Errors ({{ errors.length }})
               </h3>
-              <v-expansion-panels variant="accordion">
-                <v-expansion-panel
+              <div class="d-flex flex-column gap-3">
+                <v-card
                   v-for="(error, index) in errors"
                   :key="index"
-                  class="mb-2"
+                  elevation="2"
+                  class="error-card"
                 >
-                  <v-expansion-panel-title class="text-error">
-                    <v-icon icon="mdi-alert" class="mr-2"></v-icon>
-                    Row {{ error.row_number }}: {{ error.error }}
-                  </v-expansion-panel-title>
-                  <v-expansion-panel-text>
-                          <table class="bordered-table">
-                            <thead>
-                              <tr>
-                                <th class="text-caption">Field</th>
-                                <th class="text-caption">Value</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr v-for="(value, key) in error.row_data" :key="key">
-                                <td class="font-weight-medium text-caption">{{ formatTableKey(key) }}</td>
-                                <td class="text-caption">{{ value }}</td>
-                              </tr>
-                            </tbody>
-                          </table>
-                  </v-expansion-panel-text>
-                </v-expansion-panel>
-              </v-expansion-panels>
+                  <v-card-text class="pb-3">
+                    <div class="d-flex align-center mb-2">
+                      <v-icon icon="mdi-alert" color="error" class="mr-2"></v-icon>
+                      <span class="text-subtitle-2 font-weight-medium text-error">
+                        Row {{ String(error.row_number || error.row) }}: {{ String(error.error || error.message) }}
+                      </span>
+                    </div>
+                  </v-card-text>
+                </v-card>
+              </div>
             </div>
 
           </v-card-text>
@@ -202,7 +193,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onUnmounted } from 'vue';
+import { ref, onUnmounted, computed } from 'vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import UiParentCard from '~/components/shared/UiParentCard.vue';
 
@@ -221,7 +212,16 @@ const fileInput = ref<HTMLInputElement | null>(null);
 
 let eventSource: EventSource | null = null;
 
+// Computed property to track if import is in progress
+const isImportInProgress = computed(() => {
+  return Boolean(loading.value || 
+         (importId.value && importStatus.value?.status === 'processing') ||
+         (importId.value && !importStatus.value)); // When importId exists but no status yet
+});
+
 const handleFileSelect = (event: Event) => {
+  if (isImportInProgress.value) return;
+  
   const target = event.target as HTMLInputElement;
   if (target.files && target.files.length > 0) {
     file.value = Array.from(target.files);
@@ -229,6 +229,8 @@ const handleFileSelect = (event: Event) => {
 };
 
 const handleDrop = (event: DragEvent) => {
+  if (isImportInProgress.value) return;
+  
   event.preventDefault();
   isDragOver.value = false;
   
@@ -238,20 +240,28 @@ const handleDrop = (event: DragEvent) => {
 };
 
 const handleDragOver = (event: DragEvent) => {
+  if (isImportInProgress.value) return;
+  
   event.preventDefault();
   isDragOver.value = true;
 };
 
 const handleDragLeave = (event: DragEvent) => {
+  if (isImportInProgress.value) return;
+  
   event.preventDefault();
   isDragOver.value = false;
 };
 
 const triggerFileInput = () => {
+  if (isImportInProgress.value) return;
+  
   fileInput.value?.click();
 };
 
 const clearFile = () => {
+  if (isImportInProgress.value) return;
+  
   file.value = null;
   if (fileInput.value) {
     fileInput.value.value = '';
@@ -301,6 +311,7 @@ const startStreaming = (id: string) => {
       if (data.status?.status === 'completed' || data.status?.status === 'failed') {
         eventSource?.close();
         eventSource = null;
+        loading.value = false; // Ensure loading is false when import completes
       }
     },
     (error) => {
@@ -311,7 +322,7 @@ const startStreaming = (id: string) => {
   );
 
   eventSource.onopen = () => {
-    loading.value = false;
+    // Don't set loading to false here, keep it true until import completes
   };
 };
 
@@ -369,8 +380,9 @@ const getDotColor = (item: any) => {
     return 'primary';
 };
 
-const formatSummaryKey = (key: string) => {
-    return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+const formatSummaryKey = (key: string | number) => {
+    const keyStr = String(key);
+    return keyStr.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
 // Enhanced helper methods
@@ -471,6 +483,18 @@ onUnmounted(() => {
   background-color: #f1f8e9;
 }
 
+.file-upload-area.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.file-upload-area.disabled:hover {
+  border-color: #e0e0e0;
+  background-color: #fafafa;
+  transform: none;
+}
+
 .file-info {
   max-width: 400px;
   margin: 0 auto;
@@ -522,5 +546,14 @@ onUnmounted(() => {
 
 .bordered-table tbody tr:hover {
   background-color: #f0f0f0;
+}
+
+.error-card {
+  border-left: 4px solid #f44336;
+  background-color: #fff5f5;
+}
+
+.error-card:hover {
+  background-color: #ffebee;
 }
 </style>

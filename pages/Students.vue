@@ -32,6 +32,7 @@
             @edit-student="handleEditStudent"
             @delete-student="handleDeleteStudent"
             @add-nomination="handleAddNomination"
+            @view-student-details="handleViewStudentDetails"
             @items-per-page-changed="handleItemsPerPageChange"
           />
         </UiParentCard>
@@ -89,6 +90,12 @@
         </v-card>
       </v-dialog>
     </PermissionGuard>
+
+    <StudentDetailsModal
+      :dialog="showDetailsDialog"
+      :student="selectedStudent"
+      @toggle-dialog="showDetailsDialog = false"
+    />
   </PermissionGuard>
 </template> 
 
@@ -99,6 +106,7 @@ import StudentFilters from '~/components/students/StudentFilters.vue';
 import StudentsTable from '~/components/students/StudentsTable.vue';
 import AddStudentForm from '~/components/students/AddStudentForm.vue';
 import UpdateStudentForm from '~/components/students/UpdateStudentForm.vue';
+import StudentDetailsModal from '~/components/students/StudentDetailsModal.vue';
 import NominationForm from '~/components/nominations/NominationForm.vue';
 import PermissionButton from '~/components/shared/PermissionButton.vue';
 import PermissionGuard from '~/components/shared/PermissionGuard.vue';
@@ -115,6 +123,7 @@ const showAddFormDialog = ref(false);
 const showUpdateFormDialog = ref(false);
 const showDeleteDialog = ref(false);
 const showNominationFormDialog = ref(false);
+const showDetailsDialog = ref(false);
 
 // Student data and state
 const students = ref<Student[]>([]);
@@ -281,6 +290,11 @@ const confirmDeleteStudent = async () => {
 const handleItemsPerPageChange = (newItemsPerPage: number) => {
   pagination.itemsPerPage = newItemsPerPage;
   fetchStudents();
+};
+
+const handleViewStudentDetails = (student: Student) => {
+  selectedStudent.value = student;
+  showDetailsDialog.value = true;
 };
 
 onMounted(() => {

@@ -17,6 +17,7 @@
                             :readonly="!isMatricNumberEditable"
                             :disabled="!isMatricNumberEditable"
                             :error-messages="formErrors.matric_number"
+                            @blur="formData.matric_number = formData.matric_number?.trim()"
                         ></v-text-field>
                     </v-col>
                     <v-col cols="12" sm="6">
@@ -27,6 +28,7 @@
                             variant="outlined"
                             :error-messages="formErrors.name"
                             required
+                            @blur="formData.name = formData.name?.trim()"
                         ></v-text-field>
                     </v-col>
                     <v-col cols="12">
@@ -38,6 +40,7 @@
                             variant="outlined"
                             :error-messages="formErrors.email"
                             required
+                            @blur="formData.email = formData.email?.trim()"
                         ></v-text-field>
                     </v-col>
                     <v-col cols="12" sm="6">
@@ -62,6 +65,7 @@
                             variant="outlined"
                             :error-messages="formErrors.current_semester"
                             required
+                            @blur="formData.current_semester = formData.current_semester?.trim()"
                         ></v-text-field>
                     </v-col>
                     <v-col cols="12" sm="6">
@@ -83,10 +87,11 @@
                             density="compact"
                             variant="outlined"
                             :error-messages="formErrors.country"
+                            @blur="formData.country = formData.country?.trim()"
                         ></v-text-field>
                     </v-col>
                     <v-col cols="12" sm="6">
-                        <v-label class="font-weight-bold mb-1">Main Supervisor*</v-label>
+                        <v-label class="font-weight-bold mb-1">Research Supervisor*</v-label>
                         <v-select
                             v-model="formData.main_supervisor_id"
                             :items="lecturers"
@@ -135,6 +140,7 @@
                             density="compact"
                             variant="outlined"
                             :error-messages="formErrors.research_title"
+                            @blur="formData.research_title = formData.research_title?.trim()"
                         ></v-text-field>
                     </v-col>
                 </v-row>
@@ -159,10 +165,12 @@
 import { ref, computed, watch, onMounted, nextTick, toRaw } from 'vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { useEnumsStore } from '~/stores/enums';
+import { useValidation } from '~/composables/useValidation';
 import type { Student } from '~/types/global';
 
 const userManagement = useUserManagement();
 const enumsStore = useEnumsStore();
+const { validateEmail } = useValidation();
 
 const props = defineProps({
     dialog: {
@@ -231,6 +239,12 @@ const validateForm = () => {
     if (!formData.value.department) errors.department = 'Department is required';
     if (!formData.value.main_supervisor_id) errors.main_supervisor_id = 'Main supervisor is required';
     if (!formData.value.evaluation_type) errors.evaluation_type = 'Evaluation type is required';
+
+    // Email validation
+    const emailValidation = validateEmail(formData.value.email);
+    if (!emailValidation.valid) {
+        errors.email = emailValidation.message;
+    }
 
     formErrors.value = errors;
     return Object.keys(errors).length === 0;
@@ -302,8 +316,6 @@ const handleSubmit = async () => {
             ...formData.value,
             co_supervisors: formData.value.co_supervisor_ids || []
         };
-
-        console.log('Submitting student update data:', submitData);
         
         await userManagement.updateStudent(props.student.id.toString(), submitData);
         emits('student-updated');

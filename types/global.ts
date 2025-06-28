@@ -168,6 +168,7 @@ export interface Student {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+  user_roles?: string[];
   program?: Program;
   main_supervisor?: Lecturer;
   co_supervisors?: CoSupervisor[];

@@ -2,6 +2,33 @@
   <v-card class="mb-6 elevation-2">
     <v-card-text>
       <v-row>
+        <!-- Student Name Filter -->
+        <v-col cols="12" md="6">
+          <v-text-field
+            v-model="filters.student_name"
+            label="Student Name"
+            density="compact"
+            variant="outlined"
+            clearable
+            hide-details
+            @keyup.enter="applyFilters"
+            @blur="filters.student_name = filters.student_name?.trim()"
+          ></v-text-field>
+        </v-col>
+
+        <!-- Matric Number Filter -->
+        <v-col cols="12" md="6">
+          <v-text-field
+            v-model="filters.matric_number"
+            label="Matric Number"
+            density="compact"
+            variant="outlined"
+            clearable
+            hide-details
+            @keyup.enter="applyFilters"
+            @blur="filters.matric_number = filters.matric_number?.trim()"
+          ></v-text-field>
+        </v-col>
 
         <!-- Nomination Status Filter -->
         <v-col cols="12" md="6">
@@ -15,6 +42,20 @@
             hide-details
             :loading="enumsStore.loading"
             :disabled="statusItems.length === 0"
+          ></v-select>
+        </v-col>
+
+        <!-- Department Filter -->
+        <v-col cols="12" md="6">
+          <v-select
+            v-model="filters.department"
+            :items="departmentItems"
+            label="Department"
+            density="compact"
+            variant="outlined"
+            clearable
+            hide-details
+            :loading="enumsStore.loading"
           ></v-select>
         </v-col>
 
@@ -43,6 +84,19 @@
             hide-details
             :loading="loadingAcademicYears"
             :disabled="academicYearItems.length === 0"
+          ></v-select>
+        </v-col>
+
+        <!-- Postponed Filter -->
+        <v-col cols="12" md="6">
+          <v-select
+            v-model="filters.is_postponed"
+            :items="postponedItems"
+            label="Postponed"
+            density="compact"
+            variant="outlined"
+            clearable
+            hide-details
           ></v-select>
         </v-col>
       </v-row>

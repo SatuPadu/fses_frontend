@@ -61,15 +61,15 @@
           </div>
         </div>
 
-        <!-- Supervisor Information -->
+        <!-- Research Supervisor Information -->
         <div class="section-divider mb-4">
-          <div class="text-h6 my-4">Supervisor Information</div>
+          <div class="text-h6 my-4">Research Supervisor Information</div>
           <div>
             <v-row>
               <v-col cols="12" md="6">
                 <v-text-field
                   :model-value="nominationData?.student?.main_supervisor?.name"
-                  label="Main Supervisor"
+                  label="Research Supervisor"
                   variant="outlined"
                   density="compact"
                   readonly

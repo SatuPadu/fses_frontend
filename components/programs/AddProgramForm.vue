@@ -19,6 +19,7 @@
                             variant="outlined"
                             :error-messages="formErrors.program_name"
                             required
+                            @blur="formData.program_name = formData.program_name?.trim()"
                         ></v-text-field>
                     </v-col>
                     <v-col cols="12" sm="6">
@@ -29,6 +30,7 @@
                             variant="outlined"
                             :error-messages="formErrors.program_code"
                             required
+                            @blur="formData.program_code = formData.program_code?.trim()"
                         ></v-text-field>
                     </v-col>
                     <v-col cols="12" sm="6">

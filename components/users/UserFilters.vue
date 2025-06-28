@@ -53,6 +53,7 @@
             clearable
             hide-details
             @keyup.enter="applyFilters"
+            @blur="filters.name = filters.name?.trim()"
           ></v-text-field>
         </v-col>
 
@@ -66,6 +67,7 @@
             clearable
             hide-details
             @keyup.enter="applyFilters"
+            @blur="filters.staff_number = filters.staff_number?.trim()"
           ></v-text-field>
         </v-col>
       </v-row>

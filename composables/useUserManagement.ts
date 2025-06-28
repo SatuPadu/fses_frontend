@@ -342,12 +342,7 @@ export const useUserManagement = () => {
     loading.value = true;
     error.value = null;
     try {
-      console.log('Creating student with data:', studentData);
-      console.log('API URL:', `${import.meta.env.API_BASE_URL}/students`);
-      
-      const headers = getHeaders();
-      console.log('Headers:', headers);
-      
+      const headers = getHeaders();      
       const response = await fetch(`${import.meta.env.API_BASE_URL}/students`, {
         method: 'POST',
         headers: {
@@ -357,11 +352,7 @@ export const useUserManagement = () => {
         body: JSON.stringify(studentData)
       });
 
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
       const data = await response.json();
-      console.log('Response data:', data);
 
       if (data.error) {
         throw new Error(data.error.message || 'Failed to create student');
@@ -821,6 +812,87 @@ export const useUserManagement = () => {
     return eventSource;
   };
 
+  const getSupervisors = async (department: string) => {
+    try {
+      const response = await fetch(`${import.meta.env.API_BASE_URL}/lecturers/supervisor-suggestions?department=${encodeURIComponent(department)}`, {
+        method: 'GET',
+        headers: {
+          ...getHeaders(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error.message || 'Failed to fetch supervisors');
+      }
+
+      if (data.success) {
+        return data.data;
+      }
+
+      throw new Error(data.message || 'Failed to fetch supervisors');
+    } catch (e: any) {
+      error.value = e.message || 'Failed to fetch supervisors';
+      throw e;
+    }
+  };
+
+  const getCoSupervisors = async (supervisorId: number) => {
+    try {
+      const response = await fetch(`${import.meta.env.API_BASE_URL}/lecturers/co-supervisor-suggestions?supervisor_id=${supervisorId}`, {
+        method: 'GET',
+        headers: {
+          ...getHeaders(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error.message || 'Failed to fetch co-supervisors');
+      }
+
+      if (data.success) {
+        return data.data;
+      }
+
+      throw new Error(data.message || 'Failed to fetch co-supervisors');
+    } catch (e: any) {
+      error.value = e.message || 'Failed to fetch co-supervisors';
+      throw e;
+    }
+  };
+
+  const getProgramsByDepartment = async (department: string) => {
+    try {
+      const response = await fetch(`${import.meta.env.API_BASE_URL}/programs?all=true&department=${encodeURIComponent(department)}`, {
+        method: 'GET',
+        headers: {
+          ...getHeaders(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error.message || 'Failed to fetch programs');
+      }
+
+      if (data.success) {
+        return data.data;
+      }
+
+      throw new Error(data.message || 'Failed to fetch programs');
+    } catch (e: any) {
+      error.value = e.message || 'Failed to fetch programs';
+      throw e;
+    }
+  };
+
   return {
     loading,
     error,
@@ -849,5 +921,8 @@ export const useUserManagement = () => {
     importData,
     getImportStream,
     reactivateUser,
+    getSupervisors,
+    getCoSupervisors,
+    getProgramsByDepartment,
   };
 }; 

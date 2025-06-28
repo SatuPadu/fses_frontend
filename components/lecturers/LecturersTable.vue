@@ -6,7 +6,7 @@
       :loading="loading"
       :items-per-page="itemsPerPage"
       :page="page"
-      @update-options="handleOptionsUpdate"
+      @update:options="handleOptionsUpdate"
       class="elevation-1 bordered-table"
     >
       <template v-slot:item="{ item, index }">

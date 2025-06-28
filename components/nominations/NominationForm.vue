@@ -57,6 +57,7 @@
                     density="compact"
                     :rules="[v => !!v || 'Research title is required']"
                     required
+                    @blur="researchTitle = researchTitle?.trim()"
                   />
                 </v-col>
               </v-row>
@@ -134,16 +135,20 @@
                   />
                 </v-col>
                 <v-col cols="12" md="6">
-                  <v-select
+                  <v-combobox
                     v-model="academicYear"
                     :items="academicYearOptions"
+                    item-title="title"
+                    item-value="value"
                     label="Academic Year"
                     variant="outlined"
                     density="compact"
                     :rules="[v => !!v || 'Academic year is required']"
                     :loading="loadingAcademicYears"
-                    :disabled="academicYearOptions.length === 0"
                     required
+                    clearable
+                    @update:model-value="handleAcademicYearChange"
+                    @blur="academicYear = academicYear?.trim()"
                   />
                 </v-col>
               </v-row>
@@ -218,6 +223,25 @@ const semesterOptions = [
 ];
 
 const academicYearOptions = ref<Array<{ title: string; value: string }>>([]);
+
+// Handle academic year change - add new option if it doesn't exist
+const handleAcademicYearChange = (value: string) => {
+  if (value && typeof value === 'string') {
+    // Check if the value already exists in the options
+    const existingOption = academicYearOptions.value.find(option => option.value === value);
+    
+    if (!existingOption) {
+      // Add the new academic year to the options list
+      academicYearOptions.value.push({
+        title: value,
+        value: value
+      });
+      
+      // Sort the options to keep them organized
+      academicYearOptions.value.sort((a, b) => a.value.localeCompare(b.value));
+    }
+  }
+};
 
 // Load examiner suggestions based on student ID
 const loadExaminerSuggestions = async (studentId: number) => {

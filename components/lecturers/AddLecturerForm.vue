@@ -15,6 +15,7 @@
                             density="compact"
                             variant="outlined"
                             :error-messages="formErrors.staff_number"
+                            @blur="formData.staff_number = formData.staff_number?.trim()"
                         ></v-text-field>
                     </v-col>
                     <v-col cols="12" sm="6">
@@ -25,6 +26,7 @@
                             variant="outlined"
                             :error-messages="formErrors.name"
                             required
+                            @blur="formData.name = formData.name?.trim()"
                         ></v-text-field>
                     </v-col>
                      <v-col cols="12" sm="6">
@@ -60,6 +62,7 @@
                             variant="outlined"
                             :error-messages="formErrors.email"
                             required
+                            @blur="formData.email = formData.email?.trim()"
                         ></v-text-field>
                     </v-col>
                     <v-col cols="12" sm="6">
@@ -69,6 +72,7 @@
                             density="compact"
                             variant="outlined"
                             :error-messages="formErrors.phone"
+                            @blur="formData.phone = formData.phone?.trim()"
                         ></v-text-field>
                     </v-col>
                      <v-col cols="12" sm="6">
@@ -78,6 +82,7 @@
                             density="compact"
                             variant="outlined"
                             :error-messages="formErrors.specialization"
+                            @blur="formData.specialization = formData.specialization?.trim()"
                         ></v-text-field>
                     </v-col>
                     <v-col cols="12">
@@ -87,6 +92,7 @@
                             density="compact"
                             variant="outlined"
                             :error-messages="formErrors.external_institution"
+                            @blur="formData.external_institution = formData.external_institution?.trim()"
                         ></v-text-field>
                     </v-col>
                 </v-row>
@@ -113,10 +119,12 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { useEnumsStore } from '~/stores/enums';
+import { useValidation } from '~/composables/useValidation';
 import PermissionButton from '~/components/shared/PermissionButton.vue';
 
 const userManagement = useUserManagement();
 const enumsStore = useEnumsStore();
+const { validateEmail } = useValidation();
 
 const props = defineProps({
     dialog: {
@@ -164,8 +172,13 @@ const validateForm = () => {
 
     if (!formData.value.name) errors.name = 'Name is required';
     if (!formData.value.title) errors.title = 'Title is required';
-    if (!formData.value.email) errors.email = 'Email is required';
     if (!formData.value.department) errors.department = 'Department is required';
+
+    // Email validation
+    const emailValidation = validateEmail(formData.value.email);
+    if (!emailValidation.valid) {
+        errors.email = emailValidation.message;
+    }
 
     formErrors.value = errors;
     return Object.keys(errors).length === 0;
