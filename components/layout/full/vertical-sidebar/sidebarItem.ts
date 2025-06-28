@@ -5,6 +5,7 @@ import {
   BookIcon,
   FileImportIcon,
   AwardIcon,
+  LockIcon,
 } from "vue-tabler-icons";
 
 export interface menu {
@@ -70,6 +71,14 @@ const sidebarItem: menu[] = [
     to: "/nominations",
     external: false,
     requiredPermission: "nominations:view",
+  },
+  {
+    title: "Lock Nominations",
+    icon: LockIcon,
+    to: "/lock-nominations",
+    external: false,
+    requiredPermission: "nominations:lock",
+    requiredRoles: ["ProgramCoordinator", "PGAM"],
   },
   { header: "System" },
   {

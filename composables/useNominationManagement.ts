@@ -212,6 +212,40 @@ export const useNominationManagement = () => {
     }
   };
 
+  const lockNominations = async (evaluationIds: number[]): Promise<NominationResponse> => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await fetch(`${import.meta.env.API_BASE_URL}/evaluations/nominations/lock`, {
+        method: 'POST',
+        headers: {
+          ...getHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          evaluation_ids: evaluationIds
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error.message || 'Failed to lock nominations');
+      }
+
+      if (data.success) {
+        return data;
+      }
+
+      throw new Error(data.message || 'Failed to lock nominations');
+    } catch (e: any) {
+      error.value = e.message || 'Failed to lock nominations';
+      throw e;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const getExaminer1Suggestions = async (studentId: number): Promise<ExaminerListResponse> => {
     loading.value = true;
     error.value = null;
@@ -344,6 +378,7 @@ export const useNominationManagement = () => {
     updateNomination,
     postponeNomination,
     lockNomination,
+    lockNominations,
     getExaminer1Suggestions,
     getExaminer2Suggestions,
     getExaminer3Suggestions,

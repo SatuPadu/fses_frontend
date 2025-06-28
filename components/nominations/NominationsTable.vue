@@ -71,7 +71,17 @@
             </div>
           </div>
         </td>
-        <td v-if="canEditNominations || canCreateNominations || canViewNominations || canPostponeNominations || canLockNominations" class="border border-gray-300">
+        <td class="border border-gray-300">
+          <div class="d-flex flex-column gap-1">
+            <div v-if="item.chairperson" class="text-caption">
+              <strong>Chairperson:</strong> {{ (item.chairperson.title ? item.chairperson.title + ' ' : '') + item.chairperson.name }}
+            </div>
+            <div v-else class="text-caption text-muted">
+              No chairperson assigned
+            </div>
+          </div>
+        </td>
+        <td v-if="canEditNominations || canCreateNominations || canViewNominations || canPostponeNominations" class="border border-gray-300">
           <div class="d-flex justify-end">
             <v-btn 
               v-if="canViewNominations"
@@ -82,9 +92,9 @@
             />
             <v-btn 
               v-if="canCreateNominations && item.nomination_status === 'Pending'"
-              icon="mdi-plus"
+              icon="mdi-pencil"
               variant="text"
-              @click="nominateExaminers(item)"
+              @click="editNomination(item)"
               color="primary"
             />
             <v-btn 
@@ -100,13 +110,6 @@
               variant="text"
               @click="postponeEvaluation(item)"
               color="orange"
-            />
-            <v-btn 
-              v-if="canLockNominations && item.nomination_status === 'Nominated'"
-              icon="mdi-lock"
-              variant="text"
-              @click="lockNomination(item)"
-              color="success"
             />
           </div>
         </td>
@@ -131,10 +134,8 @@ const props = defineProps<{
 const { nominations, loading, totalItems, itemsPerPage, page } = toRefs(props);
 const emits = defineEmits([
   'update-options', 
-  'nominate-examiners', 
   'edit-nomination', 
   'postpone-evaluation', 
-  'lock-nomination',
   'show-details'
 ]);
 
@@ -142,8 +143,7 @@ const {
   canViewNominations, 
   canCreateNominations, 
   canEditNominations, 
-  canPostponeNominations, 
-  canLockNominations 
+  canPostponeNominations 
 } = usePermissions();
 
 const headers = [
@@ -153,6 +153,7 @@ const headers = [
   { title: 'Co-Supervisor', key: 'co_supervisor', sortable: true, width: '180px' },
   { title: 'Status', key: 'nomination_status', sortable: true, width: '120px' },
   { title: 'Examiners', key: 'examiners', sortable: false, width: '200px' },
+  { title: 'Chairperson', key: 'chairperson', sortable: false, width: '180px' },
   { title: 'Actions', key: 'actions', sortable: false, width: '120px' },
 ];
 
@@ -190,20 +191,12 @@ const handleOptionsUpdate = (options: any) => {
   emits('update-options', options);
 };
 
-const nominateExaminers = (nomination: Evaluation) => {
-  emits('nominate-examiners', nomination);
-};
-
 const editNomination = (nomination: Evaluation) => {
   emits('edit-nomination', nomination);
 };
 
 const postponeEvaluation = (nomination: Evaluation) => {
   emits('postpone-evaluation', nomination);
-};
-
-const lockNomination = (nomination: Evaluation) => {
-  emits('lock-nomination', nomination);
 };
 
 const showDetails = (nomination: Evaluation) => {

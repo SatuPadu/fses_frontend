@@ -20,10 +20,8 @@
             :items-per-page="pagination.itemsPerPage"
             :page="pagination.page"
             @update-options="handleOptionsUpdate"
-            @nominate-examiners="handleNominateExaminers"
             @edit-nomination="handleEditNomination"
             @postpone-evaluation="handlePostponeEvaluation"
-            @lock-nomination="handleLockNomination"
             @show-details="handleShowDetails"
           />
         </UiParentCard>
@@ -59,28 +57,6 @@
       :nomination-data="selectedNomination || undefined"
       @toggle-dialog="showDetailsDialog = false"
     />
-
-    <PermissionGuard module="nominations" action="lock">
-      <v-dialog v-model="showLockDialog" max-width="400">
-        <v-card
-          title="Confirm Lock"
-          text="Are you sure you want to lock this nomination? This action cannot be undone and will prevent further modifications."
-        >
-          <template v-slot:prepend>
-            <v-icon icon="mdi-lock" color="warning"></v-icon>
-          </template>
-          <v-card-actions class="justify-start">
-            <v-btn
-              color="warning"
-              text="Lock Nomination"
-              :loading="loading"
-              @click="confirmLockNomination"
-            />
-            <v-btn text="Cancel" @click="showLockDialog = false"></v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-    </PermissionGuard>
   </PermissionGuard>
 </template>
 
@@ -98,13 +74,12 @@ import { usePermissions } from '~/composables/usePermissions';
 import type { Evaluation } from '~/types/global';
 
 const nominationManagement = useNominationManagement();
-const { canViewNominations, canCreateNominations, canEditNominations, canPostponeNominations, canLockNominations } = usePermissions();
+const { canViewNominations, canCreateNominations, canEditNominations, canPostponeNominations } = usePermissions();
 
 // Dialog states
 const showNominationFormDialog = ref(false);
 const showPostponeDialog = ref(false);
 const showDetailsDialog = ref(false);
-const showLockDialog = ref(false);
 
 // Nomination data and state
 const nominations = ref<Evaluation[]>([]);
@@ -165,17 +140,8 @@ const handleOptionsUpdate = ({ page, itemsPerPage, sortBy }: any) => {
   fetchNominations();
 };
 
-const handleNominateExaminers = (nomination: Evaluation) => {
-  if (!canCreateNominations.value) {
-    return;
-  }
-  selectedNomination.value = nomination;
-  isEditMode.value = false;
-  showNominationFormDialog.value = true;
-};
-
 const handleEditNomination = (nomination: Evaluation) => {
-  if (!canEditNominations.value) {
+  if (!canEditNominations.value && !canCreateNominations.value) {
     return;
   }
   selectedNomination.value = nomination;
@@ -189,14 +155,6 @@ const handlePostponeEvaluation = (nomination: Evaluation) => {
   }
   selectedNomination.value = nomination;
   showPostponeDialog.value = true;
-};
-
-const handleLockNomination = (nomination: Evaluation) => {
-  if (!canLockNominations.value) {
-    return;
-  }
-  selectedNomination.value = nomination;
-  showLockDialog.value = true;
 };
 
 const handleShowDetails = (nomination: Evaluation) => {
@@ -217,20 +175,6 @@ const handleNominationUpdated = () => {
 
 const handleEvaluationPostponed = () => {
   fetchNominations(); // Refresh list
-};
-
-const confirmLockNomination = async () => {
-  if (!selectedNomination.value || !canLockNominations.value) return;
-  loading.value = true;
-  try {
-    await nominationManagement.lockNomination(selectedNomination.value.id.toString());
-    fetchNominations();
-  } catch (error) {
-    console.error('Error locking nomination:', error);
-  } finally {
-    showLockDialog.value = false;
-    loading.value = false;
-  }
 };
 
 onMounted(() => {

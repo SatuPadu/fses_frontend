@@ -81,7 +81,6 @@
                     label="Examiner 1"
                     variant="outlined"
                     density="compact"
-                    :rules="[v => !!v || 'Examiner 1 is required']"
                     :loading="loadingExaminerSuggestions"
                     :disabled="availableExaminers1.length === 0"
                     clearable
@@ -96,9 +95,8 @@
                     label="Examiner 2"
                     variant="outlined"
                     density="compact"
-                    :rules="[v => !!v || 'Examiner 2 is required']"
-                    :loading="loadingExaminerSuggestions"
-                    :disabled="availableExaminers2.length === 0"
+                    :loading="loadingExaminerSuggestions && !!selectedExaminer1"
+                    :disabled="!isExaminer2Enabled"
                     clearable
                   />
                 </v-col>
@@ -111,9 +109,8 @@
                     label="Examiner 3"
                     variant="outlined"
                     density="compact"
-                    :rules="[v => !!v || 'Examiner 3 is required']"
-                    :loading="loadingExaminerSuggestions"
-                    :disabled="availableExaminers3.length === 0"
+                    :loading="loadingExaminerSuggestions && !!selectedExaminer1 && !!selectedExaminer2"
+                    :disabled="!isExaminer3Enabled"
                     clearable
                   />
                 </v-col>
@@ -127,14 +124,12 @@
             <div>
               <v-row>
                 <v-col cols="12" md="6">
-                  <v-select
-                    v-model="semester"
-                    :items="semesterOptions"
+                  <v-text-field
+                    :model-value="`Semester ${nominationData?.student?.current_semester || '-'}`"
                     label="Semester"
                     variant="outlined"
                     density="compact"
-                    :rules="[v => !!v || 'Semester is required']"
-                    required
+                    readonly
                   />
                 </v-col>
                 <v-col cols="12" md="6">
@@ -179,7 +174,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, toRaw, onMounted } from 'vue';
+import { ref, watch, nextTick, toRaw, onMounted, computed } from 'vue';
 import { useNominationManagement } from '~/composables/useNominationManagement';
 import type { Evaluation, Lecturer, Examiner } from '~/types/global';
 
@@ -201,7 +196,6 @@ const researchTitle = ref('');
 const selectedExaminer1 = ref<number | null>(null);
 const selectedExaminer2 = ref<number | null>(null);
 const selectedExaminer3 = ref<number | null>(null);
-const semester = ref<number | null>(null);
 const academicYear = ref<string>('');
 
 // Available examiners
@@ -216,15 +210,6 @@ const loadingAcademicYears = ref(false);
 const loadingModal = ref(false);
 
 // Options
-const semesterOptions = [
-  { title: 'Semester 1', value: 1 },
-  { title: 'Semester 2', value: 2 },
-  { title: 'Semester 3', value: 3 },
-  { title: 'Semester 4', value: 4 },
-  { title: 'Semester 5', value: 5 },
-  { title: 'Semester 6', value: 6 },
-];
-
 const academicYearOptions = ref<Array<{ title: string; value: string }>>([]);
 
 // Handle academic year change - add new option if it doesn't exist
@@ -251,122 +236,54 @@ const loadExaminerSuggestions = async (studentId: number) => {
   loadingExaminerSuggestions.value = true;
   
   try {
-    // Load suggestions for all three examiner positions
-
+    // Only load examiner 1 suggestions initially
     const examiner1Response = await nominationManagement.getExaminer1Suggestions(studentId);
     
-    const examiner2Response = await nominationManagement.getExaminer2Suggestions(studentId);
-    
-    const examiner3Response = await nominationManagement.getExaminer3Suggestions(studentId);
     // Get current examiners from nomination data (for edit mode)
     const currentExaminer1 = props.nominationData?.examiner1;
     const currentExaminer2 = props.nominationData?.examiner2;
     const currentExaminer3 = props.nominationData?.examiner3;
 
-    // Start with API suggestions
+    // Start with examiner 1 suggestions only
     let examiner1List = examiner1Response.data || [];
-    let examiner2List = examiner2Response.data || [];
-    let examiner3List = examiner3Response.data || [];
 
-    // In edit mode, add current examiners if they're not already in the lists
+    // In edit mode, add current examiner 1 if not already in the list
+    if (props.isEdit && currentExaminer1 && !examiner1List.find(e => e.id === currentExaminer1.id)) {
+      const examiner1AsExaminer: Examiner = {
+        id: currentExaminer1.id,
+        name: currentExaminer1.name,
+        email: currentExaminer1.email,
+        title: currentExaminer1.title,
+        phone: currentExaminer1.phone || undefined,
+        department: currentExaminer1.department || '',
+        is_from_fai: currentExaminer1.is_from_fai,
+        external_institution: currentExaminer1.external_institution || undefined,
+        specialization: currentExaminer1.specialization || undefined
+      };
+      examiner1List = [examiner1AsExaminer, ...examiner1List];
+    }
+
+    availableExaminers1.value = addDisplayName(examiner1List);
+    
+    // Initialize examiner 2 and 3 as empty (will be loaded when examiner 1 is selected)
+    availableExaminers2.value = [];
+    availableExaminers3.value = [];
+
+    // If in edit mode and we have current examiners, load them sequentially
     if (props.isEdit) {
-      // Add current examiner 1 if not already in the list
-      if (currentExaminer1 && !examiner1List.find(e => e.id === currentExaminer1.id)) {
-        const examiner1AsExaminer: Examiner = {
-          id: currentExaminer1.id,
-          name: currentExaminer1.name,
-          email: currentExaminer1.email,
-          title: currentExaminer1.title,
-          phone: currentExaminer1.phone || undefined,
-          department: currentExaminer1.department || '',
-          is_from_fai: currentExaminer1.is_from_fai,
-          external_institution: currentExaminer1.external_institution || undefined,
-          specialization: currentExaminer1.specialization || undefined
-        };
-        examiner1List = [examiner1AsExaminer, ...examiner1List];
-      }
-
-      // Add current examiner 2 if not already in the list
-      if (currentExaminer2 && !examiner2List.find(e => e.id === currentExaminer2.id)) {
-        const examiner2AsExaminer: Examiner = {
-          id: currentExaminer2.id,
-          name: currentExaminer2.name,
-          email: currentExaminer2.email,
-          title: currentExaminer2.title,
-          phone: currentExaminer2.phone || undefined,
-          department: currentExaminer2.department || '',
-          is_from_fai: currentExaminer2.is_from_fai,
-          external_institution: currentExaminer2.external_institution || undefined,
-          specialization: currentExaminer2.specialization || undefined
-        };
-        examiner2List = [examiner2AsExaminer, ...examiner2List];
-      }
-
-      // Add current examiner 3 if not already in the list
-      if (currentExaminer3 && !examiner3List.find(e => e.id === currentExaminer3.id)) {
-        const examiner3AsExaminer: Examiner = {
-          id: currentExaminer3.id,
-          name: currentExaminer3.name,
-          email: currentExaminer3.email,
-          title: currentExaminer3.title,
-          phone: currentExaminer3.phone || undefined,
-          department: currentExaminer3.department || '',
-          is_from_fai: currentExaminer3.is_from_fai,
-          external_institution: currentExaminer3.external_institution || undefined,
-          specialization: currentExaminer3.specialization || undefined
-        };
-        examiner3List = [examiner3AsExaminer, ...examiner3List];
+      if (currentExaminer1) {
+        // Load examiner 2 suggestions based on examiner 1
+        await loadExaminer2Suggestions(studentId, currentExaminer1.id);
+        
+        if (currentExaminer2) {
+          // Load examiner 3 suggestions based on examiner 1 and 2
+          await loadExaminer3Suggestions(studentId, currentExaminer1.id, currentExaminer2.id);
+        }
       }
     }
 
-    availableExaminers1.value = examiner1List;
-    availableExaminers2.value = examiner2List;
-    availableExaminers3.value = examiner3List;
-
-    // Add displayName property to all examiner arrays
-    const addDisplayName = (examiners: Examiner[]) => {
-      return examiners.map(examiner => ({
-        ...examiner,
-        displayName: `${examiner.title || ''} ${examiner.name}`.trim()
-      }));
-    };
-
-    availableExaminers1.value = addDisplayName(availableExaminers1.value);
-    availableExaminers2.value = addDisplayName(availableExaminers2.value);
-    availableExaminers3.value = addDisplayName(availableExaminers3.value);
-
-    // Also set the general available examiners for backward compatibility
-    // Convert Examiner[] to Lecturer[] for compatibility
-    const allExaminers = [
-      ...availableExaminers1.value,
-      ...availableExaminers2.value,
-      ...availableExaminers3.value
-    ];
-    
-    availableExaminers.value = allExaminers.map(examiner => ({
-      id: examiner.id,
-      name: examiner.name,
-      email: examiner.email,
-      title: examiner.title,
-      phone: examiner.phone || null,
-      department: examiner.department || '',
-      is_from_fai: examiner.is_from_fai,
-      external_institution: examiner.external_institution || null,
-      specialization: examiner.specialization || null,
-      user_id: null,
-      staff_number: null,
-      created_at: '',
-      updated_at: '',
-      deleted_at: null
-    })) as Lecturer[];
-
   } catch (error) {
     console.error('Error loading examiner suggestions:', error);
-    console.error('Error details:', {
-      message: (error as Error).message,
-      stack: (error as Error).stack,
-      name: (error as Error).name
-    });
     // If suggestions fail, set empty arrays
     availableExaminers1.value = [];
     availableExaminers2.value = [];
@@ -375,6 +292,80 @@ const loadExaminerSuggestions = async (studentId: number) => {
   } finally {
     loadingExaminerSuggestions.value = false;
   }
+};
+
+// Load examiner 2 suggestions based on examiner 1
+const loadExaminer2Suggestions = async (studentId: number, examiner1Id: number) => {
+  try {
+    const examiner2Response = await nominationManagement.getExaminer2Suggestions(studentId);
+    let examiner2List = examiner2Response.data || [];
+    
+    // Filter out examiner 1 from examiner 2 list
+    examiner2List = examiner2List.filter(e => e.id !== examiner1Id);
+    
+    // In edit mode, add current examiner 2 if not already in the list
+    const currentExaminer2 = props.nominationData?.examiner2;
+    if (props.isEdit && currentExaminer2 && !examiner2List.find(e => e.id === currentExaminer2.id)) {
+      const examiner2AsExaminer: Examiner = {
+        id: currentExaminer2.id,
+        name: currentExaminer2.name,
+        email: currentExaminer2.email,
+        title: currentExaminer2.title,
+        phone: currentExaminer2.phone || undefined,
+        department: currentExaminer2.department || '',
+        is_from_fai: currentExaminer2.is_from_fai,
+        external_institution: currentExaminer2.external_institution || undefined,
+        specialization: currentExaminer2.specialization || undefined
+      };
+      examiner2List = [examiner2AsExaminer, ...examiner2List];
+    }
+    
+    availableExaminers2.value = addDisplayName(examiner2List);
+  } catch (error) {
+    console.error('Error loading examiner 2 suggestions:', error);
+    availableExaminers2.value = [];
+  }
+};
+
+// Load examiner 3 suggestions based on examiner 1 and 2
+const loadExaminer3Suggestions = async (studentId: number, examiner1Id: number, examiner2Id: number) => {
+  try {
+    const examiner3Response = await nominationManagement.getExaminer3Suggestions(studentId);
+    let examiner3List = examiner3Response.data || [];
+    
+    // Filter out examiner 1 and 2 from examiner 3 list
+    examiner3List = examiner3List.filter(e => e.id !== examiner1Id && e.id !== examiner2Id);
+    
+    // In edit mode, add current examiner 3 if not already in the list
+    const currentExaminer3 = props.nominationData?.examiner3;
+    if (props.isEdit && currentExaminer3 && !examiner3List.find(e => e.id === currentExaminer3.id)) {
+      const examiner3AsExaminer: Examiner = {
+        id: currentExaminer3.id,
+        name: currentExaminer3.name,
+        email: currentExaminer3.email,
+        title: currentExaminer3.title,
+        phone: currentExaminer3.phone || undefined,
+        department: currentExaminer3.department || '',
+        is_from_fai: currentExaminer3.is_from_fai,
+        external_institution: currentExaminer3.external_institution || undefined,
+        specialization: currentExaminer3.specialization || undefined
+      };
+      examiner3List = [examiner3AsExaminer, ...examiner3List];
+    }
+    
+    availableExaminers3.value = addDisplayName(examiner3List);
+  } catch (error) {
+    console.error('Error loading examiner 3 suggestions:', error);
+    availableExaminers3.value = [];
+  }
+};
+
+// Add displayName property to examiner arrays
+const addDisplayName = (examiners: Examiner[]) => {
+  return examiners.map(examiner => ({
+    ...examiner,
+    displayName: `${examiner.title || ''} ${examiner.name}`.trim()
+  }));
 };
 
 // Load academic years from API
@@ -407,7 +398,6 @@ const initializeForm = async () => {
   selectedExaminer1.value = null;
   selectedExaminer2.value = null;
   selectedExaminer3.value = null;
-  semester.value = null;
   academicYear.value = '';
 
   // If data exists (either editing or creating new), populate form
@@ -450,7 +440,6 @@ const initializeForm = async () => {
       selectedExaminer1.value = rawData.examiner1?.id || null;
       selectedExaminer2.value = rawData.examiner2?.id || null;
       selectedExaminer3.value = rawData.examiner3?.id || null;
-      semester.value = rawData.semester || null;
       academicYear.value = rawData.academic_year || '';
     }
     
@@ -465,8 +454,8 @@ const submitForm = async () => {
   try {
     const formData = {
       student_id: props.nominationData?.student?.id || 0,
-      semester: semester.value || 0,
-      academic_year: academicYear.value,
+      semester: Number(props.nominationData?.student?.current_semester) || 0,
+      academic_year: (academicYear.value as any)?.value || academicYear.value || '',
       examiner1_id: selectedExaminer1.value || undefined,
       examiner2_id: selectedExaminer2.value || undefined,
       examiner3_id: selectedExaminer3.value || undefined,
@@ -570,6 +559,45 @@ watch(
   },
   { deep: true }
 );
+
+// Watch for examiner 1 changes
+watch(selectedExaminer1, async (newExaminer1Id, oldExaminer1Id) => {
+  if (newExaminer1Id !== oldExaminer1Id) {
+    // Reset examiner 2 and 3 when examiner 1 changes
+    selectedExaminer2.value = null;
+    selectedExaminer3.value = null;
+    availableExaminers2.value = [];
+    availableExaminers3.value = [];
+    
+    // Load examiner 2 suggestions if examiner 1 is selected
+    if (newExaminer1Id && props.nominationData?.student?.id) {
+      await loadExaminer2Suggestions(props.nominationData.student.id, newExaminer1Id);
+    }
+  }
+});
+
+// Watch for examiner 2 changes
+watch(selectedExaminer2, async (newExaminer2Id, oldExaminer2Id) => {
+  if (newExaminer2Id !== oldExaminer2Id) {
+    // Reset examiner 3 when examiner 2 changes
+    selectedExaminer3.value = null;
+    availableExaminers3.value = [];
+    
+    // Load examiner 3 suggestions if both examiner 1 and 2 are selected
+    if (newExaminer2Id && selectedExaminer1.value && props.nominationData?.student?.id) {
+      await loadExaminer3Suggestions(props.nominationData.student.id, selectedExaminer1.value, newExaminer2Id);
+    }
+  }
+});
+
+// Computed properties for field states
+const isExaminer2Enabled = computed(() => {
+  return selectedExaminer1.value !== null && availableExaminers2.value.length > 0;
+});
+
+const isExaminer3Enabled = computed(() => {
+  return selectedExaminer1.value !== null && selectedExaminer2.value !== null && availableExaminers3.value.length > 0;
+});
 
 // OnMounted hook to ensure APIs are loaded when the component is first created
 onMounted(async () => {

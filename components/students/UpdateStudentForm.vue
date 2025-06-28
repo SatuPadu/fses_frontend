@@ -351,23 +351,19 @@ const handleDepartmentChange = async () => {
     
     try {
         const department = formData.value.department;
-        console.log('Loading data for department:', department);
         
         if (department) {
             // Fetch programs for the selected department
             loadingPrograms.value = true;
             const programsData = await userManagement.getProgramsByDepartment(department);
-            console.log('Programs loaded:', programsData);
             programs.value = programsData;
             
             // Fetch supervisors for the selected department
             loadingSupervisors.value = true;
             const supervisorData = await userManagement.getSupervisors(department);
-            console.log('Supervisors loaded:', supervisorData);
             
             // Get current supervisor from student data (for edit mode)
             const currentSupervisor = props.student?.main_supervisor;
-            console.log('Current supervisor:', currentSupervisor);
             
             let supervisorList = supervisorData.map((supervisor: any) => ({
                 ...supervisor,
@@ -377,7 +373,6 @@ const handleDepartmentChange = async () => {
             // If we're in edit mode and have a current supervisor, check if it's in the list
             if (currentSupervisor && props.student) {
                 const supervisorExists = supervisorList.find((s: any) => s.id === (currentSupervisor.id || currentSupervisor.user_id));
-                console.log('Supervisor exists in list:', supervisorExists);
                 
                 if (!supervisorExists) {
                     // Add current supervisor to the list
@@ -394,7 +389,6 @@ const handleDepartmentChange = async () => {
                         displayName: `${currentSupervisor.title ? currentSupervisor.title + ' ' : ''}${currentSupervisor.name}`.trim()
                     };
                     supervisorList = [currentSupervisorAsExaminer, ...supervisorList];
-                    console.log('Added current supervisor to list:', currentSupervisorAsExaminer);
                 }
             }
             
@@ -418,7 +412,6 @@ const handleSupervisorChange = async () => {
         if (supervisorId) {
             loadingCoSupervisors.value = true;
             const coSupervisorData = await userManagement.getCoSupervisors(supervisorId);
-            console.log('Co-supervisors loaded:', coSupervisorData);
             
             coSupervisors.value = coSupervisorData.map((coSupervisor: any) => ({
                 ...coSupervisor,
@@ -434,7 +427,6 @@ const handleSupervisorChange = async () => {
 
 const populateForm = async () => {
     if (props.student) {
-        console.log('Starting to populate form with student data:', props.student);
         
         // Wait for next tick to ensure data is reactive
         await nextTick();
@@ -442,7 +434,6 @@ const populateForm = async () => {
         
         // Convert proxy to raw object to access nested properties properly
         const rawStudent = toRaw(props.student);
-        console.log('Raw student data:', rawStudent);
         
         // Store the original values we need to set after loading dependent data
         const originalValues = {
@@ -460,9 +451,7 @@ const populateForm = async () => {
             evaluation_type: rawStudent.evaluation_type || null,
             research_title: rawStudent.research_title || '',
         };
-        
-        console.log('Original values to set:', originalValues);
-        
+                
         originalMatricNumber.value = originalValues.matric_number;
         
         // Set basic form data first
@@ -479,13 +468,9 @@ const populateForm = async () => {
             evaluation_type: originalValues.evaluation_type,
             research_title: originalValues.research_title,
         };
-        
-        console.log('Basic form data set:', formData.value);
-        
+                
         // Load dependent data based on current values
-        if (originalValues.department) {
-            console.log('Loading dependent data for department:', originalValues.department);
-            
+        if (originalValues.department) {            
             // Load programs and supervisors for the department
             await handleDepartmentChange();
             
@@ -494,7 +479,6 @@ const populateForm = async () => {
             
             // Now set the program and load semester options
             if (originalValues.program_id) {
-                console.log('Setting program_id:', originalValues.program_id);
                 formData.value.program_id = originalValues.program_id;
                 await handleProgramChange();
                 
@@ -503,14 +487,12 @@ const populateForm = async () => {
                 
                 // Set the semester
                 if (originalValues.current_semester) {
-                    console.log('Setting current_semester:', originalValues.current_semester);
                     formData.value.current_semester = originalValues.current_semester;
                 }
             }
             
             // Set the supervisor and load co-supervisors
             if (originalValues.main_supervisor_id) {
-                console.log('Setting main_supervisor_id:', originalValues.main_supervisor_id);
                 formData.value.main_supervisor_id = originalValues.main_supervisor_id;
                 await handleSupervisorChange();
                 
@@ -519,13 +501,11 @@ const populateForm = async () => {
                 
                 // Set the co-supervisors
                 if (originalValues.co_supervisor_ids.length > 0) {
-                    console.log('Setting co_supervisor_ids:', originalValues.co_supervisor_ids);
                     formData.value.co_supervisor_ids = originalValues.co_supervisor_ids;
                 }
             }
         }
         
-        console.log('Final form data:', formData.value);
     }
 };
 
