@@ -194,11 +194,13 @@ import { ref, computed, watch, onMounted, nextTick, toRaw } from 'vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { useEnumsStore } from '~/stores/enums';
 import { useValidation } from '~/composables/useValidation';
+import { useToast } from '~/composables/useToast';
 import type { Student } from '~/types/global';
 
 const userManagement = useUserManagement();
 const enumsStore = useEnumsStore();
 const { validateEmail } = useValidation();
+const toast = useToast();
 
 const props = defineProps({
     dialog: {
@@ -294,6 +296,7 @@ const fetchOptions = async () => {
         }));
     } catch (e: any) {
         console.error('Error fetching options:', e.message || 'Failed to fetch options');
+        toast.error('Failed to fetch lecturers', 'Unable to load lecturer options');
     }
 };
 
@@ -529,7 +532,8 @@ const handleSubmit = async () => {
             co_supervisors: formData.value.co_supervisor_ids || []
         };
         
-        await userManagement.updateStudent(props.student.id.toString(), submitData);
+        const response = await userManagement.updateStudent(props.student.id.toString(), submitData);
+        toast.handleApiSuccess(response, 'Student updated successfully');
         emits('student-updated');
         toggleDialog();
     } catch (error: any) {
@@ -537,6 +541,7 @@ const handleSubmit = async () => {
             formErrors.value = error.response.data.errors;
         } else {
             console.error('Error updating student:', error);
+            toast.handleApiError(error, 'Failed to update student');
         }
     } finally {
         loading.value = false;

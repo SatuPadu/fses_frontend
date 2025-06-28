@@ -120,9 +120,11 @@ definePageMeta({
 
 import { reactive, computed, onMounted } from 'vue';
 import { useAuth } from '@/composables/useAuth';
+import { useToast } from '@/composables/useToast';
 import type { PasswordChangePayload } from '@/types/auth';
 
 const auth = useAuth();
+const toast = useToast();
 const router = useRouter();
 const route = useRoute();
 
@@ -222,6 +224,7 @@ const handleSetPassword = async () => {
     if (result.success) {
       // Success scenario
       state.successMessage = 'Password reset successfully! Redirecting to login...';
+      toast.success('Password Reset Successful', 'Your password has been reset successfully');
       
       // Optional: Clear sensitive data
       formData.password = '';
@@ -234,11 +237,13 @@ const handleSetPassword = async () => {
     } else {
       // Failed scenario
       state.errorMessage = 'Failed to reset password. Please try again.';
+      toast.error('Password Reset Failed', 'Failed to reset password. Please try again');
     }
   } catch (err: any) {
     // Error handling
     console.error('Password reset error:', err);
     state.errorMessage = err?.message || 'An unexpected error occurred.';
+    toast.error('Reset Error', 'An unexpected error occurred during password reset');
     
     // Handle specific token-related errors
     if (err?.message?.toLowerCase().includes('token')) {

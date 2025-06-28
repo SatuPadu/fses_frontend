@@ -165,6 +165,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import { useNominationManagement } from '~/composables/useNominationManagement';
+import { useToast } from '~/composables/useToast';
 import type { Evaluation, PostponeNominationRequest } from '~/types/global';
 
 const props = defineProps<{
@@ -175,6 +176,7 @@ const props = defineProps<{
 const emits = defineEmits(['toggle-dialog', 'evaluation-postponed']);
 
 const nominationManagement = useNominationManagement();
+const toast = useToast();
 const form = ref();
 const isFormValid = ref(false);
 const loading = ref(false);
@@ -295,13 +297,15 @@ const submitForm = async () => {
     } as PostponeNominationRequest;
 
     if (props.nominationData) {
-      await nominationManagement.postponeNomination(props.nominationData.id.toString(), formData);
+      const response = await nominationManagement.postponeNomination(props.nominationData.id.toString(), formData);
+      toast.handleApiSuccess(response, 'Evaluation postponed successfully');
       emits('evaluation-postponed');
     }
 
     closeDialog();
   } catch (error) {
     console.error('Error postponing evaluation:', error);
+    toast.handleApiError(error, 'Failed to postpone evaluation');
   } finally {
     loading.value = false;
   }

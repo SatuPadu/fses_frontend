@@ -90,11 +90,13 @@ import PermissionButton from '~/components/shared/PermissionButton.vue';
 import PermissionGuard from '~/components/shared/PermissionGuard.vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { usePermissions } from '~/composables/usePermissions';
+import { useToast } from '~/composables/useToast';
 import type { Program } from '~/types/global';
 import { PlusIcon, ExclamationCircleIcon } from 'vue-tabler-icons';
 
 const userManagement = useUserManagement();
 const { canViewPrograms, canCreatePrograms, canEditPrograms, canDeletePrograms } = usePermissions();
+const toast = useToast();
 
 // Dialog states
 const showAddFormDialog = ref(false);
@@ -137,6 +139,7 @@ const fetchPrograms = async () => {
 
   } catch (error) {
     console.error('Error fetching programs:', error);
+    toast.error('Error fetching programs');
   } finally {
     loading.value = false;
   }
@@ -158,10 +161,12 @@ const handleOptionsUpdate = ({ page, itemsPerPage, sortBy }: any) => {
 
 const handleProgramAdded = () => {
   fetchPrograms(); // Refresh list
+  toast.success('Program added successfully');
 };
 
 const handleProgramUpdated = () => {
   fetchPrograms(); // Refresh list
+  toast.success('Program updated successfully');
 };
 
 const handleEditProgram = (program: Program) => {
@@ -186,8 +191,10 @@ const confirmDeleteProgram = async () => {
   try {
     await userManagement.deleteProgram(selectedProgram.value.id.toString());
     fetchPrograms();
+    toast.success('Program deleted successfully');
   } catch (error) {
     console.error('Error deleting program:', error);
+    toast.error('Error deleting program');
   } finally {
     showDeleteDialog.value = false;
     loading.value = false;

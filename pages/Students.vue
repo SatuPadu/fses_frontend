@@ -112,11 +112,13 @@ import PermissionButton from '~/components/shared/PermissionButton.vue';
 import PermissionGuard from '~/components/shared/PermissionGuard.vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { usePermissions } from '~/composables/usePermissions';
+import { useToast } from '~/composables/useToast';
 import type { Student, Evaluation } from '~/types/global';
 import { PlusIcon, ExclamationCircleIcon } from 'vue-tabler-icons';
 
 const userManagement = useUserManagement();
-const { canViewStudents, canCreateStudents, canEditStudents, canDeleteStudents, canCreateNominations } = usePermissions();
+const { canViewStudents, canEditStudents, canDeleteStudents, canCreateNominations } = usePermissions();
+const toast = useToast();
 
 // Dialog states
 const showAddFormDialog = ref(false);
@@ -180,6 +182,7 @@ const fetchStudents = async () => {
 
   } catch (error) {
     console.error('Error fetching students:', error);
+    toast.error('Error fetching students');
   } finally {
     loading.value = false;
   }
@@ -201,10 +204,12 @@ const handleOptionsUpdate = ({ page, itemsPerPage, sortBy }: any) => {
 
 const handleStudentAdded = () => {
   fetchStudents(); // Refresh list
+  toast.success('Student added successfully');
 };
 
 const handleStudentUpdated = () => {
   fetchStudents(); // Refresh list
+  toast.success('Student updated successfully');
 };
 
 const handleEditStudent = (student: Student) => {
@@ -264,6 +269,7 @@ const handleNominationCreated = () => {
   selectedNominationData.value = undefined;
   // Optionally refresh students to show updated evaluation status
   fetchStudents();
+  toast.success('Nomination created successfully');
 };
 
 const handleNominationUpdated = () => {
@@ -271,6 +277,7 @@ const handleNominationUpdated = () => {
   selectedNominationData.value = undefined;
   // Optionally refresh students to show updated evaluation status
   fetchStudents();
+  toast.success('Nomination updated successfully');
 };
 
 const confirmDeleteStudent = async () => {
@@ -279,8 +286,10 @@ const confirmDeleteStudent = async () => {
   try {
     await userManagement.deleteStudent(selectedStudent.value.id.toString());
     fetchStudents();
+    toast.success('Student deleted successfully');
   } catch (error) {
     console.error('Error deleting student:', error);
+    toast.error('Error deleting student');
   } finally {
     showDeleteDialog.value = false;
     loading.value = false;

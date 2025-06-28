@@ -6,6 +6,7 @@
         <!-- Action Buttons -->
         <div class="d-flex justify-end mb-4 mt-4 gap-2">
           <PermissionButton 
+            v-if="!isProgramCoordinator"
             module="lecturers" 
             action="create"
             @click="showAddFormDialog = true" 
@@ -82,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import UiParentCard from '~/components/shared/UiParentCard.vue';
 import LecturerFilters from '~/components/lecturers/LecturerFilters.vue';
 import LecturersTable from '~/components/lecturers/LecturersTable.vue';
@@ -92,11 +93,13 @@ import PermissionButton from '~/components/shared/PermissionButton.vue';
 import PermissionGuard from '~/components/shared/PermissionGuard.vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { usePermissions } from '~/composables/usePermissions';
+import { useToast } from '~/composables/useToast';
 import type { Lecturer } from '~/types/global';
 import { PlusIcon, ExclamationCircleIcon } from 'vue-tabler-icons';
 
 const userManagement = useUserManagement();
-const { canViewLecturers, canCreateLecturers, canEditLecturers, canDeleteLecturers } = usePermissions();
+const { canViewLecturers, canEditLecturers, canDeleteLecturers, isProgramCoordinator } = usePermissions();
+const toast = useToast();
 
 // Dialog states
 const showAddFormDialog = ref(false);
@@ -141,6 +144,7 @@ const fetchLecturers = async () => {
 
   } catch (error) {
     console.error('Error fetching lecturers:', error);
+    toast.error('Error fetching lecturers');
   } finally {
     loading.value = false;
   }
@@ -173,10 +177,12 @@ const handleOptionsUpdate = ({ page, itemsPerPage, sortBy }: any) => {
 
 const handleLecturerAdded = () => {
   fetchLecturers(); // Refresh list
+  toast.success('Lecturer added successfully');
 };
 
 const handleLecturerUpdated = () => {
   fetchLecturers(); // Refresh list
+  toast.success('Lecturer updated successfully');
 };
 
 const handleEditLecturer = (lecturer: Lecturer) => {
@@ -201,8 +207,10 @@ const confirmDeleteLecturer = async () => {
   try {
     await userManagement.deleteLecturer(selectedLecturer.value.id.toString());
     fetchLecturers();
+    toast.success('Lecturer deleted successfully');
   } catch (error) {
     console.error('Error deleting lecturer:', error);
+    toast.error('Error deleting lecturer');
   } finally {
     showDeleteDialog.value = false;
     loading.value = false;

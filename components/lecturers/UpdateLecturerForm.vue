@@ -116,12 +116,14 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { useEnumsStore } from '~/stores/enums';
 import { useValidation } from '~/composables/useValidation';
+import { useToast } from '~/composables/useToast';
 import type { Lecturer } from '~/types/global';
 import PermissionButton from '~/components/shared/PermissionButton.vue';
 
 const userManagement = useUserManagement();
 const enumsStore = useEnumsStore();
 const { validateEmail } = useValidation();
+const toast = useToast();
 
 const props = defineProps({
     dialog: {
@@ -199,7 +201,8 @@ const handleSubmit = async () => {
     formErrors.value = {};
 
     try {
-        await userManagement.updateLecturer(props.lecturerInfo.id.toString(), formData.value);
+        const response = await userManagement.updateLecturer(props.lecturerInfo.id.toString(), formData.value);
+        toast.handleApiSuccess(response, 'Lecturer updated successfully');
         emits('lecturer-updated');
         toggleDialog();
     } catch (error: any) {
@@ -207,6 +210,7 @@ const handleSubmit = async () => {
             formErrors.value = error.response.data.errors;
         } else {
             console.error('Error updating lecturer:', error);
+            toast.handleApiError(error, 'Failed to update lecturer');
         }
     } finally {
         loading.value = false;

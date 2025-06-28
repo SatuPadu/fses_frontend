@@ -48,10 +48,12 @@ import LockNominationsTable from '~/components/nominations/LockNominationsTable.
 import PermissionGuard from '~/components/shared/PermissionGuard.vue';
 import { useNominationManagement } from '~/composables/useNominationManagement';
 import { usePermissions } from '~/composables/usePermissions';
+import { useToast } from '~/composables/useToast';
 import type { Evaluation } from '~/types/global';
 
 const nominationManagement = useNominationManagement();
 const { canLockNominations } = usePermissions();
+const toast = useToast();
 
 // State
 const nominations = ref<Evaluation[]>([]);
@@ -97,6 +99,7 @@ const fetchNominations = async () => {
 
   } catch (error) {
     console.error('Error fetching nominations:', error);
+    toast.error('Failed to fetch nominations. Please try again later.');
   } finally {
     loading.value = false;
   }
@@ -130,8 +133,10 @@ const lockSelectedNominations = async () => {
     // Refresh the list after locking
     fetchNominations();
     selectedNominations.value = [];
+    toast.success('Nominations locked successfully!');
   } catch (error) {
     console.error('Error locking nominations:', error);
+    toast.error('Failed to lock nominations. Please try again later.');
   } finally {
     lockingNominations.value = false;
   }

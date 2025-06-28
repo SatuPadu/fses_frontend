@@ -2,7 +2,7 @@
     <v-dialog v-model="dialogModel" max-width="600">
         <v-card>
             <v-card-title class="d-flex justify-space-between align-center">
-                <span>Add New Lecturer</span>
+                <span>{{ title }}</span>
                 <v-btn icon="mdi-close" variant="text" @click="toggleDialog"></v-btn>
             </v-card-title>
             <v-divider></v-divider>
@@ -120,16 +120,22 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { useEnumsStore } from '~/stores/enums';
 import { useValidation } from '~/composables/useValidation';
+import { useToast } from '~/composables/useToast';
 import PermissionButton from '~/components/shared/PermissionButton.vue';
 
 const userManagement = useUserManagement();
 const enumsStore = useEnumsStore();
 const { validateEmail } = useValidation();
+const toast = useToast();
 
 const props = defineProps({
     dialog: {
         type: Boolean,
         default: false
+    },
+    title: {
+        type: String,
+        default: 'Add New Lecturer'
     }
 });
 
@@ -193,14 +199,16 @@ const handleSubmit = async () => {
     formErrors.value = {};
 
     try {
-        await userManagement.createLecturer(formData.value);
-        emits('lecturer-added');
+        const newLecturer = await userManagement.createLecturer(formData.value);
+        emits('lecturer-added', newLecturer.data);
         toggleDialog();
+        toast.handleApiSuccess(newLecturer, `${props.title.split(' ')[2]} created successfully`);
     } catch (error: any) {
         if (error.response && error.response.data && error.response.data.errors) {
             formErrors.value = error.response.data.errors;
         } else {
             console.error('Error creating lecturer:', error);
+            toast.handleApiError(error, `Failed to create ${props.title.toLocaleLowerCase().split(' ')[2]}`);
         }
     } finally {
         loading.value = false;

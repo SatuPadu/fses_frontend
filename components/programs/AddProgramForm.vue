@@ -89,9 +89,11 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { useEnumsStore } from '~/stores/enums';
+import { useToast } from '~/composables/useToast';
 
 const userManagement = useUserManagement();
 const enumsStore = useEnumsStore();
+const toast = useToast();
 
 const props = defineProps({
     dialog: {
@@ -153,7 +155,8 @@ const handleSubmit = async () => {
     formErrors.value = {};
 
     try {
-        await userManagement.createProgram(formData.value);
+        const response = await userManagement.createProgram(formData.value);
+        toast.handleApiSuccess(response, 'Program created successfully');
         emits('program-added');
         toggleDialog();
     } catch (error: any) {
@@ -161,6 +164,7 @@ const handleSubmit = async () => {
             formErrors.value = error.response.data.errors;
         } else {
             console.error('Error creating program:', error);
+            toast.handleApiError(error, 'Failed to create program');
         }
     } finally {
         loading.value = false;

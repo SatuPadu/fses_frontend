@@ -125,12 +125,14 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { useEnumsStore } from '~/stores/enums';
 import { useValidation } from '~/composables/useValidation';
+import { useToast } from '~/composables/useToast';
 import PermissionGuard from '~/components/shared/PermissionGuard.vue';
 import PermissionButton from '~/components/shared/PermissionButton.vue';
 
 const userManagement = useUserManagement();
 const enumsStore = useEnumsStore();
 const { validateEmail } = useValidation();
+const toast = useToast();
 
 const props = defineProps({
     dialog: {
@@ -199,7 +201,8 @@ const handleSubmit = async () => {
     loading.value = true;
 
     try {
-        await userManagement.createUser(formData.value);
+        const response = await userManagement.createUser(formData.value);
+        toast.handleApiSuccess(response, 'User created successfully');
         
         emits('user-added');
         
@@ -211,6 +214,7 @@ const handleSubmit = async () => {
             formErrors.value = error.response.data.errors;
         } else {
             console.error('Error creating user:', error);
+            toast.handleApiError(error, 'Failed to create user');
         }
     } finally {
         loading.value = false;

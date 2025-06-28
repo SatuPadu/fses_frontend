@@ -66,15 +66,17 @@ import UiParentCard from '~/components/shared/UiParentCard.vue';
 import NominationFilters from '~/components/nominations/NominationFilters.vue';
 import NominationsTable from '~/components/nominations/NominationsTable.vue';
 import NominationForm from '~/components/nominations/NominationForm.vue';
-import PostponeEvaluation from '~/components/nominations/PostponeEvaluation.vue';
 import NominationDetailsModal from '~/components/nominations/NominationDetailsModal.vue';
+import PostponeEvaluation from '~/components/nominations/PostponeEvaluation.vue';
 import PermissionGuard from '~/components/shared/PermissionGuard.vue';
 import { useNominationManagement } from '~/composables/useNominationManagement';
 import { usePermissions } from '~/composables/usePermissions';
+import { useToast } from '~/composables/useToast';
 import type { Evaluation } from '~/types/global';
 
 const nominationManagement = useNominationManagement();
 const { canViewNominations, canCreateNominations, canEditNominations, canPostponeNominations } = usePermissions();
+const toast = useToast();
 
 // Dialog states
 const showNominationFormDialog = ref(false);
@@ -105,13 +107,18 @@ const fetchNominations = async () => {
 
   loading.value = true;
   try {
+
+    const filtersWithChairperson = {
+      ...activeFilters.value,
+      chairperson_assigned: false
+    };
     // Call the getNominations API with the correct parameters
     const response = await nominationManagement.getNominations({
       page: pagination.page,
       perPage: pagination.itemsPerPage,
       sortBy: pagination.sortBy.length ? pagination.sortBy[0].key : 'student_name',
       sortOrder: pagination.sortBy.length ? pagination.sortBy[0].order : 'desc',
-      filters: activeFilters.value
+      filters: filtersWithChairperson
     });
 
     // Update the nominations and pagination
@@ -121,6 +128,7 @@ const fetchNominations = async () => {
 
   } catch (error) {
     console.error('Error fetching nominations:', error);
+    toast.error('Error fetching nominations');
   } finally {
     loading.value = false;
   }
@@ -167,14 +175,17 @@ const handleShowDetails = (nomination: Evaluation) => {
 
 const handleNominationCreated = () => {
   fetchNominations(); // Refresh list
+  toast.success('Nomination created successfully');
 };
 
 const handleNominationUpdated = () => {
   fetchNominations(); // Refresh list
+  toast.success('Nomination updated successfully');
 };
 
 const handleEvaluationPostponed = () => {
   fetchNominations(); // Refresh list
+  toast.success('Evaluation postponed successfully');
 };
 
 onMounted(() => {

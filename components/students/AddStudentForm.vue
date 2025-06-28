@@ -175,10 +175,12 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { useEnumsStore } from '~/stores/enums';
 import { useValidation } from '~/composables/useValidation';
+import { useToast } from '~/composables/useToast';
 
 const userManagement = useUserManagement();
 const enumsStore = useEnumsStore();
 const { validateEmail } = useValidation();
+const toast = useToast();
 
 const props = defineProps({
     dialog: {
@@ -262,6 +264,7 @@ const fetchOptions = async () => {
         }));
     } catch (e: any) {
         console.error('Error fetching options:', e.message || 'Failed to fetch options');
+        toast.error('Failed to fetch lecturers', 'Unable to load lecturer options');
     }
 };
 
@@ -335,6 +338,7 @@ const handleDepartmentChange = async () => {
         }
     } catch (e: any) {
         console.error('Error fetching department data:', e.message || 'Failed to fetch department data');
+        toast.error('Failed to fetch department data', 'Unable to load programs and supervisors');
     } finally {
         loadingPrograms.value = false;
         loadingSupervisors.value = false;
@@ -358,6 +362,7 @@ const handleSupervisorChange = async () => {
         }
     } catch (e: any) {
         console.error('Error fetching co-supervisor options:', e.message || 'Failed to fetch co-supervisor options');
+        toast.error('Failed to fetch co-supervisors', 'Unable to load co-supervisor options');
     } finally {
         loadingCoSupervisors.value = false;
     }
@@ -379,7 +384,8 @@ const handleSubmit = async () => {
             co_supervisors: formData.value.co_supervisor_ids || []
         };
                 
-        await userManagement.createStudent(submitData);
+        const response = await userManagement.createStudent(submitData);
+        toast.handleApiSuccess(response, 'Student created successfully');
         emits('student-added');
         toggleDialog();
     } catch (error: any) {
@@ -387,6 +393,7 @@ const handleSubmit = async () => {
             formErrors.value = error.response.data.errors;
         } else {
             console.error('Error creating student:', error);
+            toast.handleApiError(error, 'Failed to create student');
         }
     } finally {
         loading.value = false;

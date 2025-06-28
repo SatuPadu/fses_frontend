@@ -195,9 +195,11 @@
 <script setup lang="ts">
 import { ref, onUnmounted, computed } from 'vue';
 import { useUserManagement } from '~/composables/useUserManagement';
+import { useToast } from '~/composables/useToast';
 import UiParentCard from '~/components/shared/UiParentCard.vue';
 
 const { importData, getImportStream, downloadImportTemplate } = useUserManagement();
+const toast = useToast();
 
 const file = ref<File[] | null>(null);
 const loading = ref(false);
@@ -285,9 +287,11 @@ const handleFileUpload = async () => {
   try {
     const data = await importData(file.value[0]);
     importId.value = data.import_id;
+    toast.success('Import started', 'File uploaded successfully. Import is now processing...');
     startStreaming(data.import_id);
   } catch (error) {
     console.error('Error starting import:', error);
+    toast.handleApiError(error, 'Failed to start import');
     loading.value = false;
   }
 };
@@ -312,10 +316,18 @@ const startStreaming = (id: string) => {
         eventSource?.close();
         eventSource = null;
         loading.value = false; // Ensure loading is false when import completes
+        
+        // Show completion notification
+        if (data.status?.status === 'completed') {
+          toast.success('Import completed', 'All data has been processed successfully');
+        } else if (data.status?.status === 'failed') {
+          toast.error('Import failed', 'The import process encountered errors');
+        }
       }
     },
     (error) => {
       console.error('Stream error:', error);
+      toast.error('Connection error', 'Lost connection to import stream');
       loading.value = false;
       eventSource = null;
     }
@@ -350,8 +362,10 @@ const downloadTemplate = async () => {
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
+    toast.success('Template downloaded', 'Import template has been downloaded successfully');
   } catch (error) {
     console.error('Error downloading template:', error);
+    toast.handleApiError(error, 'Failed to download template');
   }
 };
 

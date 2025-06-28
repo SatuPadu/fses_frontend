@@ -102,11 +102,13 @@ import PermissionButton from '~/components/shared/PermissionButton.vue';
 import PermissionGuard from '~/components/shared/PermissionGuard.vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { usePermissions } from '~/composables/usePermissions';
+import { useToast } from '~/composables/useToast';
 import type { User } from '~/types/global';
-import { PlusIcon, ExclamationCircleIcon } from 'vue-tabler-icons';
+import { PlusIcon, ExclamationCircleIcon, RefreshIcon } from 'vue-tabler-icons';
 
 const userManagement = useUserManagement();
-const { canViewUsers, canCreateUsers, canEditUsers, canDeleteUsers } = usePermissions();
+const { canViewUsers, canEditUsers, canDeleteUsers } = usePermissions();
+const toast = useToast();
 
 // Dialog states
 const showAddFormDialog = ref(false);
@@ -152,6 +154,7 @@ const fetchUsers = async () => {
 
   } catch (error) {
     console.error('Error fetching users:', error);
+    toast.handleApiError(error, 'Failed to fetch users');
   } finally {
     loading.value = false;
   }
@@ -182,25 +185,26 @@ const handleOptionsUpdate = ({ page, itemsPerPage, sortBy }: any) => {
   fetchUsers();
 };
 
-const handleImportComplete = () => {
-  fetchUsers(); // Refresh list after bulk import
-};
 
 const handleUserAdded = () => {
   fetchUsers(); // Refresh list
+  toast.success('User added successfully');
 };
 
 const handleUserUpdated = () => {
   fetchUsers(); // Refresh list
+  toast.success('User updated successfully');
 };
 
 const handleReactivateUser = async (user: User) => {
   loading.value = true;
   try {
-    await userManagement.reactivateUser(user.id.toString());
+    const response = await userManagement.reactivateUser(user.id.toString());
+    toast.handleApiSuccess(response, 'User reactivated successfully');
     fetchUsers(); // Refresh list
   } catch (error) {
     console.error('Error reactivating user:', error);
+    toast.handleApiError(error, 'Failed to reactivate user');
   } finally {
     loading.value = false;
   }
@@ -234,10 +238,12 @@ const confirmDeleteUser = async () => {
   if (!selectedUser.value || !canDeleteUsers.value) return;
   loading.value = true;
   try {
-    await userManagement.deleteUser(selectedUser.value.id.toString());
+    const response = await userManagement.deleteUser(selectedUser.value.id.toString());
+    toast.handleApiSuccess(response, 'User deleted successfully');
     fetchUsers();
   } catch (error) {
     console.error('Error deleting user:', error);
+    toast.handleApiError(error, 'Failed to delete user');
   } finally {
     showDeleteDialog.value = false;
     loading.value = false;

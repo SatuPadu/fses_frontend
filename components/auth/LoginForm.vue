@@ -63,9 +63,11 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useAuth } from '~/composables/useAuth'
+import { useToast } from '~/composables/useToast'
 import type { LoginCredentials } from '~/types/auth'
 
 const auth = useAuth()
+const toast = useToast()
 
 const formData = reactive<LoginCredentials>({
   identity: '',
@@ -95,8 +97,17 @@ const handleLogin = async () => {
     if (!result.success) {
       error.value = result.error || 'Invalid credentials. Please check your username and password.';
       accountLocked.value = result.accountLocked || false;
+      
+      // Show toast for login errors
+      if (result.accountLocked) {
+        toast.warning('Account Locked', 'Your account has been locked due to multiple failed login attempts');
+      } else {
+        toast.error('Login Failed', 'Invalid credentials. Please check your username and password');
+      }
     } else {
       // Handle successful login and redirection
+      toast.success('Login Successful', 'Welcome back!');
+      
       if (auth.needsPasswordChange) {
         // Redirect to password change page
         await navigateTo('/auth/set-new-password');
@@ -109,6 +120,7 @@ const handleLogin = async () => {
     console.error('Login error:', err);
     error.value = err?.message || 'An unexpected error occurred. Please try again.';
     accountLocked.value = false;
+    toast.error('Login Error', 'An unexpected error occurred. Please try again');
   } finally {
     loading.value = false;
   }
