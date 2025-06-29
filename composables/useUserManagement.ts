@@ -214,13 +214,19 @@ export const useUserManagement = () => {
     loading.value = true;
     error.value = null;
     try {
+      // Transform role field to single string format for backend
+      const transformedData = { ...userData };
+      if (userData.role) {
+        transformedData.role = userData.role; // Keep as single string
+      }
+
       const response = await fetch(`${import.meta.env.API_BASE_URL}/users`, {
         method: 'POST',
         headers: {
           ...getHeaders(),
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(userData)
+        body: JSON.stringify(transformedData)
       });
 
       const data = await response.json();
@@ -246,13 +252,19 @@ export const useUserManagement = () => {
     loading.value = true;
     error.value = null;
     try {
+      // Transform roles field to backend format
+      const transformedData = { ...userData };
+      if (userData.roles && Array.isArray(userData.roles)) {
+        transformedData.roles = userData.roles; // Keep as array for backend
+      }
+
       const response = await fetch(`${import.meta.env.API_BASE_URL}/users/${userId}`, {
         method: 'PUT',
         headers: {
           ...getHeaders(),
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(userData)
+        body: JSON.stringify(transformedData)
       });
 
       const data = await response.json();
@@ -893,6 +905,28 @@ export const useUserManagement = () => {
     }
   };
 
+  const getStudentDetail = async (id: string) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await fetch(`${import.meta.env.API_BASE_URL}/students/${id}`, {
+        method: 'GET',
+        headers: {
+          ...getHeaders(),
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.message || 'Failed to fetch student');
+      return data.data;
+    } catch (e: any) {
+      error.value = e.message || 'Failed to fetch student';
+      throw e;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     loading,
     error,
@@ -924,5 +958,6 @@ export const useUserManagement = () => {
     getSupervisors,
     getCoSupervisors,
     getProgramsByDepartment,
+    getStudentDetail,
   };
 }; 

@@ -9,12 +9,12 @@
           <NominationFilters @filters-updated="handleFiltersUpdated" />
         </div>
         
-        <!-- Auto Assign Button -->
+        <!-- Smart Auto Assign Button -->
         <div class="d-flex justify-start mb-4">
           <v-btn
             color="primary"
             variant="flat"
-            @click="autoAssignChairpersons"
+            @click="smartAutoAssignChairpersons"
             :loading="autoAssigning"
             :disabled="nominations.length === 0"
             prepend-icon="mdi-auto-fix"
@@ -26,6 +26,7 @@
         <!-- Nominations Table -->
         <UiParentCard class="mt-4" :showTitle="false">
           <AssignChairpersonsTable
+            ref="chairpersonTableRef"
             :nominations="nominations"
             :loading="loading"
             :total-items="pagination.totalItems"
@@ -105,6 +106,9 @@ const nominationManagement = useNominationManagement();
 const { canAssignChairpersons } = usePermissions();
 const toast = useToast();
 
+// Template refs
+const chairpersonTableRef = ref();
+
 // State
 const nominations = ref<Evaluation[]>([]);
 const loading = ref(false);
@@ -139,7 +143,8 @@ const fetchNominations = async () => {
     // Add chairperson_assigned=false to filters to get nominations without chairpersons
     const filtersWithChairperson = {
       ...activeFilters.value,
-      chairperson_assigned: false
+      chairperson_assigned: false,
+      department_specific: true
     };
 
     const response = await nominationManagement.getNominations({
@@ -171,58 +176,64 @@ const fetchNominations = async () => {
   }
 };
 
-// Auto assign chairpersons with improved error handling and validation
-const autoAssignChairpersons = async () => {
+// Smart auto assign chairpersons using the child component's logic
+const smartAutoAssignChairpersons = async () => {
   if (nominations.value.length === 0) {
     toast.warning('No Nominations', 'No nominations available for assignment');
     return;
   }
 
+  if (!chairpersonTableRef.value) {
+    toast.error('System Error', 'Table component not available');
+    return;
+  }
+
   autoAssigning.value = true;
   try {
-    // Get all chairperson suggestions once (flat list)
-    const response = await nominationManagement.getChairpersonSuggestions();
-    const allChairpersons = response?.data || [];
-
-    // Build a map of current assignment counts
-    const assignmentCounts: Record<number, number> = {};
-    assignments.value.forEach(a => {
-      assignmentCounts[a.chairperson_id] = (assignmentCounts[a.chairperson_id] || 0) + 1;
-    });
-
-    // Copy nominations to avoid mutating original
-    const newAssignments: typeof assignments.value = [];
-
-    for (const nomination of nominations.value) {
-      // Filter eligible chairpersons (less than 4 assignments)
-      const eligible = allChairpersons.filter(
-        c => (assignmentCounts[c.id] || 0) < 4
-      );
-      if (eligible.length === 0) continue;
-
-      // Pick one at random
-      const randomIndex = Math.floor(Math.random() * eligible.length);
-      const selected = eligible[randomIndex];
-
-      // Assign and increment count
-      newAssignments.push({
-        evaluation_id: nomination.id,
-        chairperson_id: selected.id,
-        is_auto_assigned: true,
-      });
-      assignmentCounts[selected.id] = (assignmentCounts[selected.id] || 0) + 1;
-    }
-
-    assignments.value = newAssignments;
-
-    if (newAssignments.length > 0) {
-      toast.success('Auto Assignment Complete', `${newAssignments.length} chairpersons assigned automatically`);
+    // Count existing assignments before auto-assignment
+    const existingAssignments = assignments.value.length;
+    const existingManualAssignments = assignments.value.filter(a => !a.is_auto_assigned).length;
+    const existingAutoAssignments = assignments.value.filter(a => a.is_auto_assigned).length;
+    
+    // Use the child component's smart assignment function
+    const newAssignments = await chairpersonTableRef.value.smartAssignAll();
+    
+    const totalAssigned = newAssignments.length;
+    const newManualAssignments = Array.isArray(newAssignments) ? newAssignments.filter(a => !a.is_auto_assigned).length : 0;
+    const newAutoAssignments = Array.isArray(newAssignments) ? newAssignments.filter(a => a.is_auto_assigned).length : 0;
+    
+    // Calculate changes
+    const preservedManual = newManualAssignments;
+    const replacedConflicted = existingManualAssignments - preservedManual;
+    const newlyAutoAssigned = newAutoAssignments - existingAutoAssignments;
+    
+    if (totalAssigned > 0) {
+      assignments.value = newAssignments;
+      
+      let message = `${totalAssigned} chairpersons assigned intelligently`;
+      const details = [];
+      
+      if (newlyAutoAssigned > 0) {
+        details.push(`${newlyAutoAssigned} newly assigned`);
+      }
+      if (preservedManual > 0) {
+        details.push(`${preservedManual} manual preserved`);
+      }
+      if (replacedConflicted > 0) {
+        details.push(`${replacedConflicted} conflicts fixed`);
+      }
+      
+      if (details.length > 0) {
+        message += ` (${details.join(', ')})`;
+      }
+      
+      toast.success('Smart Assignment Complete', message);
     } else {
       toast.warning('No Assignments Made', 'No suitable chairpersons available for automatic assignment');
     }
   } catch (error) {
-    console.error('Error auto assigning chairpersons:', error);
-    toast.handleApiError(error, 'Failed to auto assign chairpersons');
+    console.error('Error smart assigning chairpersons:', error);
+    toast.handleApiError(error, 'Failed to smart assign chairpersons');
   } finally {
     autoAssigning.value = false;
   }

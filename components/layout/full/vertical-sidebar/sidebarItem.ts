@@ -51,6 +51,7 @@ const sidebarItem: menu[] = [
     to: "/lecturers",
     external: false,
     requiredPermission: "lecturers:view",
+    requiredRoles: ["OfficeAssistant", "PGAM", "ProgramCoordinator"],
   },
   {
     title: "Programs",

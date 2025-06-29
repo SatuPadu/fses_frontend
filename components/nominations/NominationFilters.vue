@@ -45,8 +45,8 @@
           ></v-select>
         </v-col>
 
-        <!-- Department Filter -->
-        <v-col cols="12" md="6">
+        <!-- Department Filter - Only for PGAM -->
+        <v-col v-if="isPGAM || fromNominations" cols="12" md="6">
           <v-select
             v-model="filters.department"
             :items="departmentItems"
@@ -111,11 +111,20 @@
 import { reactive, computed, onMounted, ref } from 'vue';
 import { useEnumsStore } from '~/stores/enums';
 import { useNominationManagement } from '~/composables/useNominationManagement';
+import { usePermissions } from '~/composables/usePermissions';
 
 const emits = defineEmits(['filters-updated']);
 
 const enumsStore = useEnumsStore();
 const nominationManagement = useNominationManagement();
+const { isPGAM } = usePermissions();
+
+defineProps({
+  fromNominations: {
+    type: Boolean,
+    default: false,
+  },
+});
 
 const filters = reactive({
   student_name: '',

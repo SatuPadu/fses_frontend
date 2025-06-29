@@ -17,6 +17,7 @@
     <template #item.index="{ index }">
       {{ (page - 1) * itemsPerPage + index + 1 }}
     </template>
+    
     <!-- Student Info -->
     <template #item.student_name="{ item }">
       <div>
@@ -24,6 +25,7 @@
         <div class="text-caption text-muted">{{ item.student?.matric_number }}</div>
       </div>
     </template>
+    
     <!-- Program Info -->
     <template #item.program="{ item }">
       <div>
@@ -31,6 +33,15 @@
         <div class="text-caption text-muted">Semester {{ item.student?.current_semester }}</div>
       </div>
     </template>
+    
+    <!-- Main Supervisor - Fixed -->
+    <template #item.main_supervisor="{ item }">
+      <div class="text-caption">
+        <span v-if="item._mainSupervisor">{{ item._mainSupervisor }}</span>
+        <span v-else class="text-muted">No main supervisor</span>
+      </div>
+    </template>
+    
     <!-- Co-Supervisors -->
     <template #item.co_supervisor="{ item }">
       <div>
@@ -40,14 +51,8 @@
             :key="co.label || idx"
             class="text-caption"
           >
-            <span v-if="!co.isExternal">
-              <strong>{{ co.label }}:</strong>
-              {{ co.name }}
-            </span>
-            <span v-else>
-              <strong>{{ co.label }}:</strong>
-              {{ co.name }}
-            </span>
+            <strong>{{ co.label }}:</strong> {{ co.name }}
+            <span v-if="co.isExternal" class="text-muted ml-1">(External)</span>
           </div>
         </div>
         <div v-else class="text-caption text-muted">
@@ -55,6 +60,7 @@
         </div>
       </div>
     </template>
+    
     <!-- Status -->
     <template #item.nomination_status="{ item }">
       <v-chip
@@ -64,30 +70,32 @@
         variant="flat"
       />
     </template>
+    
     <!-- Examiners -->
     <template #item.examiners="{ item }">
       <div class="d-flex flex-column gap-1">
-        <div v-if="item.examiner1" class="text-caption">
-          <strong>E1:</strong> {{ (item.examiner1.title ? item.examiner1.title + ' ' : '') + item.examiner1.name }}
+        <div v-if="item._examiners && item._examiners.length">
+          <div
+            v-for="examiner in item._examiners"
+            :key="examiner.key"
+            class="text-caption"
+          >
+            <strong>{{ examiner.key }}:</strong> {{ examiner.name }}
+          </div>
         </div>
-        <div v-if="item.examiner2" class="text-caption">
-          <strong>E2:</strong> {{ (item.examiner2.title ? item.examiner2.title + ' ' : '') + item.examiner2.name }}
-        </div>
-        <div v-if="item.examiner3" class="text-caption">
-          <strong>E3:</strong> {{ (item.examiner3.title ? item.examiner3.title + ' ' : '') + item.examiner3.name }}
-        </div>
-        <div v-if="!item.examiner1 && !item.examiner2 && !item.examiner3" class="text-caption text-muted">
+        <div v-else class="text-caption text-muted">
           No examiners assigned
         </div>
       </div>
     </template>
+    
     <!-- Chairperson -->
     <template #item.chairperson="{ item }">
-      <div class="d-flex flex-column gap-1">
-        <div v-if="item.chairperson" class="text-caption">
-          <strong>Chairperson:</strong> {{ (item.chairperson.title ? item.chairperson.title + ' ' : '') + item.chairperson.name }}
+      <div class="text-caption">
+        <div v-if="item.chairperson">
+          <strong>Chairperson:</strong> {{ item._chairperson }}
         </div>
-        <div v-else class="text-caption text-muted">
+        <div v-else class="text-muted">
           No chairperson assigned
         </div>
       </div>
@@ -98,6 +106,21 @@
 <script setup lang="ts">
 import { toRefs, computed } from 'vue';
 import type { Evaluation } from '~/types/global';
+
+// Types
+interface ProcessedNomination extends Evaluation {
+  _mainSupervisor: string;
+  _coSupervisors: Array<{
+    label: string;
+    name: string;
+    isExternal: boolean;
+  }>;
+  _examiners: Array<{
+    key: string;
+    name: string;
+  }>;
+  _chairperson: string;
+}
 
 const props = defineProps<{
   nominations: Evaluation[];
@@ -111,14 +134,21 @@ const props = defineProps<{
 const { nominations, loading, totalItems, itemsPerPage, page, selectedNominations } = toRefs(props);
 const emits = defineEmits(['update-options', 'selection-changed']);
 
-const headers = [
-  { title: 'No.', key: 'index', sortable: false, width: '60px' },
-  { title: 'Student', key: 'student_name', sortable: true, width: '200px' },
-  { title: 'Program', key: 'program', sortable: true, width: '150px' },
-  { title: 'Co-Supervisor', key: 'co_supervisor', sortable: true, width: '180px' },
-  { title: 'Status', key: 'nomination_status', sortable: true, width: '120px' },
-  { title: 'Examiners', key: 'examiners', sortable: false, width: '200px' },
-  { title: 'Chairperson', key: 'chairperson', sortable: false, width: '180px' },
+const headers: Array<{
+    title: string;
+    key: string;
+    sortable: boolean;
+    width?: string;
+    align?: 'start' | 'center' | 'end';
+  }> = [
+  { title: 'No.', key: 'index', sortable: false, width: '60px', align: 'center' },
+  { title: 'Student', key: 'student_name', sortable: true, width: '200px', align: 'start' },
+  { title: 'Program', key: 'program', sortable: true, width: '150px', align: 'start' },
+  { title: 'Research Supervisor', key: 'main_supervisor', sortable: true, width: '180px', align: 'start' },
+  { title: 'Co-Supervisor', key: 'co_supervisor', sortable: true, width: '180px', align: 'start' },
+  { title: 'Status', key: 'nomination_status', sortable: true, width: '120px', align: 'start' },
+  { title: 'Examiners', key: 'examiners', sortable: false, width: '200px', align: 'start' },
+  { title: 'Chairperson', key: 'chairperson', sortable: false, width: '180px', align: 'start' },
 ];
 
 const getStatusColor = (status: string) => {
@@ -159,29 +189,78 @@ const handleSelectionUpdate = (ids: number[]) => {
   emits('selection-changed', ids);
 };
 
-// Processed nominations with co_supervisors flattened for display
-const processedNominations = computed(() => {
+// Helper function to filter out null/undefined values
+const filterNonNull = <T>(arr: (T | null | undefined)[]): T[] => 
+  arr.filter((x): x is T => x !== null && x !== undefined);
+
+// Processed nominations with all data properly formatted
+const processedNominations = computed<ProcessedNomination[]>(() => {
   return nominations.value.map(nomination => {
-    const coSupervisors = (nomination.student?.co_supervisors?.map((co, idx) => {
-      if (co.lecturer && typeof co.lecturer.name === 'string') {
-        return {
+    // Process main supervisor
+    let mainSupervisor = '';
+    if (nomination.student?.main_supervisor) {
+      const supervisor = nomination.student.main_supervisor;
+      const title = supervisor.title ? supervisor.title + ' ' : '';
+      const name = supervisor.name || '';
+      mainSupervisor = (title + name).trim();
+    }
+
+    // Process co-supervisors
+    const coSupervisors = filterNonNull(
+      nomination.student?.co_supervisors?.map((co, idx) => {
+        let name = '';
+        let isExternal = false;
+
+        if (co.lecturer?.name) {
+          // Internal co-supervisor
+          const title = co.lecturer.title ? co.lecturer.title + ' ' : '';
+          name = (title + co.lecturer.name).trim();
+          isExternal = false;
+        } else if (co.external_name) {
+          // External co-supervisor
+          const title = co.lecturer?.title ? co.lecturer.title + ' ' : '';
+          name = (title + co.external_name).trim();
+          isExternal = true;
+        }
+
+        return name ? {
           label: `Co-Supervisor ${idx + 1}`,
-          name: `${co.lecturer.title ? co.lecturer.title + ' ' : ''}${co.lecturer.name}`.trim(),
-          isExternal: false,
-        };
-      } else if (co.external_name) {
-        const extTitle = co.lecturer && typeof co.lecturer.title === 'string' ? co.lecturer.title + ' ' : '';
-        return {
-          label: `Co-Supervisor ${idx + 1}`,
-          name: `${extTitle}${co.external_name}`.trim(),
-          isExternal: true,
-        };
-      }
-      return undefined;
-    }) || []).filter((co) => co !== undefined) as Array<{label: string, name: string, isExternal: boolean}>;
+          name,
+          isExternal
+        } : null;
+      }) || []
+    );
+
+    // Process examiners
+    const examiners = filterNonNull([
+      nomination.examiner1 ? {
+        key: 'E1',
+        name: `${nomination.examiner1.title ? nomination.examiner1.title + ' ' : ''}${nomination.examiner1.name}`.trim()
+      } : null,
+      nomination.examiner2 ? {
+        key: 'E2', 
+        name: `${nomination.examiner2.title ? nomination.examiner2.title + ' ' : ''}${nomination.examiner2.name}`.trim()
+      } : null,
+      nomination.examiner3 ? {
+        key: 'E3',
+        name: `${nomination.examiner3.title ? nomination.examiner3.title + ' ' : ''}${nomination.examiner3.name}`.trim()
+      } : null,
+    ]);
+
+    // Process chairperson
+    let chairperson = '';
+    if (nomination.chairperson) {
+      const title = nomination.chairperson.title ? nomination.chairperson.title + ' ' : '';
+      const name = nomination.chairperson.name || '';
+      chairperson = (title + name).trim();
+    }
+
     return {
       ...nomination,
-      _coSupervisors: coSupervisors
+      _mainSupervisor: mainSupervisor,
+      _coSupervisors: coSupervisors,
+      _examiners: examiners,
+      _chairperson: chairperson,
     };
   });
 });

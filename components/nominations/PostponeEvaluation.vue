@@ -95,15 +95,7 @@
                           @update:model-value="handleDateSelected"
                         />
                       </v-card-text>
-                      <v-card-actions class="justify-end pa-3">
-                        <v-btn
-                          color="grey"
-                          variant="text"
-                          size="small"
-                          @click="clearAndClose"
-                        >
-                          Clear
-                        </v-btn>
+                      <v-card-actions class="justify-start pa-3">
                         <v-btn
                           color="primary"
                           variant="text"
@@ -112,6 +104,14 @@
                           :disabled="!selectedDate"
                         >
                           OK
+                        </v-btn>
+                        <v-btn
+                          color="grey"
+                          variant="text"
+                          size="small"
+                          @click="clearAndClose"
+                        >
+                          Clear
                         </v-btn>
                       </v-card-actions>
                     </v-card>

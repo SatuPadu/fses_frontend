@@ -11,16 +11,16 @@
     >
       <template v-slot:item="{ item, index }">
         <tr>
-          <td class="border border-gray-300">{{ (page - 1) * itemsPerPage + index + 1 }}</td>
-          <td class="border border-gray-300">{{ item.staff_number }}</td>
-          <td class="border border-gray-300">{{ item.title }}</td>
-          <td class="border border-gray-300">{{ item.name }}</td>
-          <td class="border border-gray-300">{{ item.department }}</td>
-          <td class="border border-gray-300">{{ item.external_institution || '-' }}</td>
-          <td class="border border-gray-300">{{ item.email }}</td>
-          <td class="border border-gray-300">{{ item.phone || '-' }}</td>
-          <td v-if="canEditLecturers || canDeleteLecturers" class="border border-gray-300">
-            <div class="d-flex justify-end">
+          <td class="border border-gray-300 text-center">{{ (page - 1) * itemsPerPage + index + 1 }}</td>
+          <td class="border border-gray-300 text-start">{{ item.staff_number }}</td>
+          <td class="border border-gray-300 text-start">{{ item.title }}</td>
+          <td class="border border-gray-300 text-start">{{ item.name }}</td>
+          <td class="border border-gray-300 text-start">{{ item.department }}</td>
+          <td class="border border-gray-300 text-start">{{ item.external_institution || '-' }}</td>
+          <td class="border border-gray-300 text-start">{{ item.email }}</td>
+          <td class="border border-gray-300 text-start">{{ item.phone || '-' }}</td>
+          <td v-if="canEditLecturers || canDeleteLecturers" class="border border-gray-300 text-center">
+            <div class="d-flex justify-center">
               <v-btn 
                 v-if="canEditLecturers"
                 icon="mdi-pencil" 
@@ -67,19 +67,19 @@ const headers = computed(() => {
     sortable: boolean;
     align?: 'start' | 'center' | 'end';
   }> = [
-    { title: 'No.', key: 'index', sortable: false },
-    { title: 'Staff Number', key: 'staff_number', sortable: true },
-    { title: 'Title', key: 'title', sortable: true },
-    { title: 'Name', key: 'name', sortable: true },
-    { title: 'Department', key: 'department', sortable: true },
-    { title: 'External Institution', key: 'external_institution', sortable: true },
-    { title: 'Email', key: 'email', sortable: true },
-    { title: 'Phone', key: 'phone', sortable: false },
+    { title: 'No.', key: 'index', sortable: false, align: 'center' },
+    { title: 'Staff Number', key: 'staff_number', sortable: true, align: 'start' },
+    { title: 'Title', key: 'title', sortable: true, align: 'start' },
+    { title: 'Name', key: 'name', sortable: true, align: 'start' },
+    { title: 'Department', key: 'department', sortable: true, align: 'start' },
+    { title: 'External Institution', key: 'external_institution', sortable: true, align: 'start' },
+    { title: 'Email', key: 'email', sortable: true, align: 'start' },
+    { title: 'Phone', key: 'phone', sortable: false, align: 'start' },
   ];
 
   // Only add Actions column if user has edit or delete permissions
   if (canEditLecturers.value || canDeleteLecturers.value) {
-    baseHeaders.push({ title: 'Actions', key: 'actions', sortable: false, align: 'end' });
+    baseHeaders.push({ title: 'Actions', key: 'actions', sortable: false, align: 'center' });
   }
 
   return baseHeaders;

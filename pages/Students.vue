@@ -301,9 +301,18 @@ const handleItemsPerPageChange = (newItemsPerPage: number) => {
   fetchStudents();
 };
 
-const handleViewStudentDetails = (student: Student) => {
-  selectedStudent.value = student;
-  showDetailsDialog.value = true;
+const handleViewStudentDetails = async (student: Student) => {
+  loading.value = true;
+  try {
+    const detail = await userManagement.getStudentDetail(student.id.toString());
+    selectedStudent.value = detail;
+    showDetailsDialog.value = true;
+  } catch (error) {
+    toast.error('Failed to fetch student details');
+    console.error(error);
+  } finally {
+    loading.value = false;
+  }
 };
 
 onMounted(() => {

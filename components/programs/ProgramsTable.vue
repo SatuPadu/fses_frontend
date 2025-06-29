@@ -17,7 +17,7 @@
           <td class="border border-gray-300">{{ item.department }}</td>
           <td class="border border-gray-300">{{ item.total_semesters }}</td>
           <td v-if="canEditPrograms || canDeletePrograms" class="border border-gray-300">
-            <div class="d-flex justify-end">
+            <div class="d-flex justify-center">
               <v-btn 
                 v-if="canEditPrograms"
                 icon="mdi-pencil" 
@@ -71,16 +71,16 @@ const headers = computed(() => {
     sortable: boolean;
     align?: 'start' | 'center' | 'end';
   }> = [
-    { title: 'No.', key: 'index', sortable: false },
-    { title: 'Program Name', key: 'program_name', sortable: true },
-    { title: 'Program Code', key: 'program_code', sortable: true },
-    { title: 'Department', key: 'department', sortable: true },
-    { title: 'Total Semesters', key: 'total_semesters', sortable: true },
+    { title: 'No.', key: 'index', sortable: false, align: 'center' },
+    { title: 'Program Name', key: 'program_name', sortable: true, align: 'start' },
+    { title: 'Program Code', key: 'program_code', sortable: true, align: 'start' },
+    { title: 'Department', key: 'department', sortable: true, align: 'start' },
+    { title: 'Total Semesters', key: 'total_semesters', sortable: true, align: 'start' },
   ];
 
   // Only add Actions column if user has edit or delete permissions
   if (canEditPrograms.value || canDeletePrograms.value) {
-    baseHeaders.push({ title: 'Actions', key: 'actions', sortable: false, align: 'end' });
+    baseHeaders.push({ title: 'Actions', key: 'actions', sortable: false, align: 'center' });
   }
 
   return baseHeaders;

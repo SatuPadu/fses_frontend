@@ -1,226 +1,208 @@
 <template>
-  <v-dialog :model-value="dialog" @update:model-value="$emit('toggle-dialog')" max-width="800px">
-    <v-card>
-      <v-card-title class="d-flex justify-space-between align-center">
-        <span>Nomination Details</span>
-        <v-btn icon="mdi-close" variant="text" @click="closeDialog" />
+  <v-dialog 
+    :model-value="dialog" 
+    @update:model-value="$emit('toggle-dialog')" 
+    max-width="900"
+  >
+    <v-card class="nomination-details-modal">
+      <v-card-title class="d-flex justify-space-between align-center pa-6 pb-4">
+        <div class="d-flex align-center">
+          <v-icon class="mr-3" color="primary" size="28">mdi-clipboard-text</v-icon>
+          <span class="text-h5 font-weight-medium">Nomination Details</span>
+        </div>
+        <v-btn 
+          icon="mdi-close" 
+          variant="text" 
+          size="small"
+          @click="closeDialog"
+          class="close-btn"
+        />
       </v-card-title>
 
-      <v-card-text>
-        <!-- Student Information -->
-        <div class="section-divider mb-4">
-          <div class="text-h6 my-4">Student Information</div>
-          <div>
-            <v-row>
-              <v-col cols="12" md="6">
-                <v-text-field
-                  :model-value="nominationData?.student?.name"
-                  label="Student Name"
-                  variant="outlined"
-                  density="compact"
-                  readonly
-                />
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field
-                  :model-value="nominationData?.student?.matric_number"
-                  label="Matric Number"
-                  variant="outlined"
-                  density="compact"
-                  readonly
-                />
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field
-                  :model-value="nominationData?.student?.program?.program_name"
-                  label="Program"
-                  variant="outlined"
-                  density="compact"
-                  readonly
-                />
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field
-                  :model-value="`Semester ${nominationData?.student?.current_semester}`"
-                  label="Current Semester"
-                  variant="outlined"
-                  density="compact"
-                  readonly
-                />
-              </v-col>
-              <v-col cols="12">
-                <v-text-field
-                  :model-value="nominationData?.student?.research_title"
-                  label="Research Title"
-                  variant="outlined"
-                  density="compact"
-                  readonly
-                />
-              </v-col>
-            </v-row>
-          </div>
-        </div>
+      <v-divider></v-divider>
 
-        <!-- Research Supervisor Information -->
-        <div class="section-divider mb-4">
-          <div class="text-h6 my-4">Research Supervisor Information</div>
-          <div>
-            <v-row>
-              <v-col cols="12" md="6">
-                <v-text-field
-                  :model-value="nominationData?.student?.main_supervisor?.name"
-                  label="Research Supervisor"
-                  variant="outlined"
-                  density="compact"
-                  readonly
-                />
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field
-                  :model-value="nominationData?.student?.main_supervisor?.title"
-                  label="Title"
-                  variant="outlined"
-                  density="compact"
-                  readonly
-                />
-              </v-col>
-            </v-row>
-          </div>
-        </div>
+      <v-card-text class="pa-6">
+        <v-row dense>
+          <!-- Student Information Section -->
+          <v-col cols="12">
+            <h3 class="text-subtitle-1 font-weight-medium mb-4 text-primary">Student Information</h3>
+          </v-col>
+          
+          <v-col cols="12" sm="6">
+            <div class="info-field">
+              <label class="text-caption font-weight-medium text-medium-emphasis">Student Name</label>
+              <p class="text-body-1 font-weight-medium">{{ nominationData?.student?.name || '-' }}</p>
+            </div>
+          </v-col>
+          
+          <v-col cols="12" sm="6">
+            <div class="info-field">
+              <label class="text-caption font-weight-medium text-medium-emphasis">Matric Number</label>
+              <p class="text-body-1 font-weight-medium">{{ nominationData?.student?.matric_number || '-' }}</p>
+            </div>
+          </v-col>
+          
+          <v-col cols="12" sm="6">
+            <div class="info-field">
+              <label class="text-caption font-weight-medium text-medium-emphasis">Program</label>
+              <p class="text-body-1 font-weight-medium">{{ nominationData?.student?.program?.program_name || '-' }}</p>
+            </div>
+          </v-col>
+          
+          <v-col cols="12" sm="6">
+            <div class="info-field">
+              <label class="text-caption font-weight-medium text-medium-emphasis">Current Semester</label>
+              <p class="text-body-1 font-weight-medium">{{ nominationData?.student?.current_semester ? `Semester ${nominationData.student.current_semester}` : '-' }}</p>
+            </div>
+          </v-col>
+          
+          <v-col cols="12">
+            <div class="info-field">
+              <label class="text-caption font-weight-medium text-medium-emphasis">Research Title</label>
+              <p class="text-body-1 font-weight-medium">{{ nominationData?.student?.research_title || '-' }}</p>
+            </div>
+          </v-col>
 
-        <!-- Examiner Information -->
-        <div class="section-divider mb-4">
-          <div class="text-h6 my-4">Examiner Information</div>
-          <div>
-            <v-row>
-              <v-col cols="12" md="4">
-                <v-text-field
-                  :model-value="nominationData?.examiner1 ? ((nominationData.examiner1.title ? nominationData.examiner1.title + ' ' : '') + nominationData.examiner1.name) : 'Not assigned'"
-                  label="Examiner 1"
-                  variant="outlined"
-                  density="compact"
-                  readonly
-                />
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-text-field
-                  :model-value="nominationData?.examiner2 ? ((nominationData.examiner2.title ? nominationData.examiner2.title + ' ' : '') + nominationData.examiner2.name) : 'Not assigned'"
-                  label="Examiner 2"
-                  variant="outlined"
-                  density="compact"
-                  readonly
-                />
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-text-field
-                  :model-value="nominationData?.examiner3 ? ((nominationData.examiner3.title ? nominationData.examiner3.title + ' ' : '') + nominationData.examiner3.name) : 'Not assigned'"
-                  label="Examiner 3"
-                  variant="outlined"
-                  density="compact"
-                  readonly
-                />
-              </v-col>
-            </v-row>
-          </div>
-        </div>
+          <!-- Research Supervisor Information Section -->
+          <v-col cols="12">
+            <h3 class="text-subtitle-1 font-weight-medium mb-4 mt-6 text-primary">Research Supervisor Information</h3>
+          </v-col>
+          
+          <v-col cols="12" sm="6">
+            <div class="info-field">
+              <label class="text-caption font-weight-medium text-medium-emphasis">Research Supervisor</label>
+              <p class="text-body-1 font-weight-medium">{{ nominationData?.student?.main_supervisor?.name || '-' }}</p>
+            </div>
+          </v-col>
+          
+          <v-col cols="12" sm="6">
+            <div class="info-field">
+              <label class="text-caption font-weight-medium text-medium-emphasis">Title</label>
+              <p class="text-body-1 font-weight-medium">{{ nominationData?.student?.main_supervisor?.title || '-' }}</p>
+            </div>
+          </v-col>
 
-        <!-- Evaluation Details -->
-        <div class="section-divider mb-4">
-          <div class="text-h6 my-4">Evaluation Details</div>
-          <div>
-            <v-row>
-              <v-col cols="12" md="4">
-                <v-text-field
-                  :model-value="getStatusText(nominationData?.nomination_status || '')"
-                  label="Status"
-                  variant="outlined"
-                  density="compact"
-                  readonly
+          <!-- Examiner Information Section -->
+          <v-col cols="12">
+            <h3 class="text-subtitle-1 font-weight-medium mb-4 mt-6 text-primary">Examiner Information</h3>
+          </v-col>
+          
+          <v-col cols="12" sm="4">
+            <div class="info-field">
+              <label class="text-caption font-weight-medium text-medium-emphasis">Examiner 1</label>
+              <p class="text-body-1 font-weight-medium">
+                {{ nominationData?.examiner1 ? ((nominationData.examiner1.title ? nominationData.examiner1.title + ' ' : '') + nominationData.examiner1.name) : 'Not assigned' }}
+              </p>
+            </div>
+          </v-col>
+          
+          <v-col cols="12" sm="4">
+            <div class="info-field">
+              <label class="text-caption font-weight-medium text-medium-emphasis">Examiner 2</label>
+              <p class="text-body-1 font-weight-medium">
+                {{ nominationData?.examiner2 ? ((nominationData.examiner2.title ? nominationData.examiner2.title + ' ' : '') + nominationData.examiner2.name) : 'Not assigned' }}
+              </p>
+            </div>
+          </v-col>
+          
+          <v-col cols="12" sm="4">
+            <div class="info-field">
+              <label class="text-caption font-weight-medium text-medium-emphasis">Examiner 3</label>
+              <p class="text-body-1 font-weight-medium">
+                {{ nominationData?.examiner3 ? ((nominationData.examiner3.title ? nominationData.examiner3.title + ' ' : '') + nominationData.examiner3.name) : 'Not assigned' }}
+              </p>
+            </div>
+          </v-col>
+
+          <!-- Evaluation Details Section -->
+          <v-col cols="12">
+            <h3 class="text-subtitle-1 font-weight-medium mb-4 mt-6 text-primary">Evaluation Details</h3>
+          </v-col>
+          
+          <v-col cols="12" sm="4">
+            <div class="info-field">
+              <label class="text-caption font-weight-medium text-medium-emphasis">Status</label>
+              <div class="d-flex align-center">
+                <v-chip
+                  :color="getStatusColor(nominationData?.nomination_status || '')"
+                  variant="flat"
+                  size="small"
+                  class="font-weight-medium"
                 >
-                </v-text-field>
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-text-field
-                  :model-value="`Semester ${nominationData?.semester}`"
-                  label="Semester"
-                  variant="outlined"
-                  density="compact"
-                  readonly
-                />
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-text-field
-                  :model-value="nominationData?.academic_year"
-                  label="Academic Year"
-                  variant="outlined"
-                  density="compact"
-                  readonly
-                />
-              </v-col>
-            </v-row>
-          </div>
-        </div>
+                  <v-icon start size="16" class="mr-1">mdi-clipboard-check</v-icon>
+                  {{ getStatusText(nominationData?.nomination_status || '') }}
+                </v-chip>
+              </div>
+            </div>
+          </v-col>
+          
+          <v-col cols="12" sm="4">
+            <div class="info-field">
+              <label class="text-caption font-weight-medium text-medium-emphasis">Semester</label>
+              <p class="text-body-1 font-weight-medium">{{ nominationData?.semester ? `Semester ${nominationData.semester}` : '-' }}</p>
+            </div>
+          </v-col>
+          
+          <v-col cols="12" sm="4">
+            <div class="info-field">
+              <label class="text-caption font-weight-medium text-medium-emphasis">Academic Year</label>
+              <p class="text-body-1 font-weight-medium">{{ nominationData?.academic_year || '-' }}</p>
+            </div>
+          </v-col>
 
-        <!-- Postponement Information -->
-        <div v-if="nominationData?.is_postponed" class="section-divider mb-4">
-          <div class="text-h6 my-4">Postponement Information</div>
-          <div>
-            <v-row>
-              <v-col cols="12">
-                <v-textarea
-                  :model-value="nominationData?.postponement_reason"
-                  label="Reason for Postponement"
-                  variant="outlined"
-                  density="compact"
-                  readonly
-                  rows="3"
-                />
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field
-                  :model-value="formatDate(nominationData?.postponed_to)"
-                  label="Postponed To"
-                  variant="outlined"
-                  density="compact"
-                  readonly
-                />
-              </v-col>
-            </v-row>
-          </div>
-        </div>
+          <!-- Postponement Information Section -->
+          <v-col cols="12" v-if="nominationData?.is_postponed">
+            <h3 class="text-subtitle-1 font-weight-medium mb-4 mt-6 text-primary">Postponement Information</h3>
+          </v-col>
+          
+          <v-col cols="12" v-if="nominationData?.is_postponed">
+            <div class="info-field">
+              <label class="text-caption font-weight-medium text-medium-emphasis">Reason for Postponement</label>
+              <p class="text-body-1 font-weight-medium">{{ nominationData?.postponement_reason || '-' }}</p>
+            </div>
+          </v-col>
+          
+          <v-col cols="12" sm="6" v-if="nominationData?.is_postponed">
+            <div class="info-field">
+              <label class="text-caption font-weight-medium text-medium-emphasis">Postponed To</label>
+              <p class="text-body-1 font-weight-medium">{{ formatDate(nominationData?.postponed_to) }}</p>
+            </div>
+          </v-col>
 
-        <!-- Timestamps -->
-        <div class="section-divider mb-4">
-          <div class="text-h6 my-4">Timestamps</div>
-          <div>
-            <v-row>
-              <v-col cols="12" md="6">
-                <v-text-field
-                  :model-value="formatDate(nominationData?.created_at)"
-                  label="Nominated At"
-                  variant="outlined"
-                  density="compact"
-                  readonly
-                />
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field
-                  :model-value="formatDate(nominationData?.locked_at)"
-                  label="Locked At"
-                  variant="outlined"
-                  density="compact"
-                  readonly
-                />
-              </v-col>
-            </v-row>
-          </div>
-        </div>
+          <!-- Timestamps Section -->
+          <v-col cols="12">
+            <h3 class="text-subtitle-1 font-weight-medium mb-4 mt-6 text-primary">Timestamps</h3>
+          </v-col>
+          
+          <v-col cols="12" sm="6">
+            <div class="info-field">
+              <label class="text-caption font-weight-medium text-medium-emphasis">Nominated At</label>
+              <p class="text-body-1 font-weight-medium">{{ formatDate(nominationData?.created_at) }}</p>
+            </div>
+          </v-col>
+          
+          <v-col cols="12" sm="6">
+            <div class="info-field">
+              <label class="text-caption font-weight-medium text-medium-emphasis">Locked At</label>
+              <p class="text-body-1 font-weight-medium">{{ formatDate(nominationData?.locked_at) }}</p>
+            </div>
+          </v-col>
+        </v-row>
       </v-card-text>
 
-      <v-card-actions class="justify-start">
-        <v-btn color="primary" variant="flat" @click="closeDialog">
-          Close
-        </v-btn>
+      <v-divider></v-divider>
+
+      <v-card-actions class="pa-6 pt-4">
+        <div class="d-flex gap-3 w-100">
+          <v-btn 
+            @click="closeDialog"
+            variant="outlined"
+            color="grey-darken-1"
+            class="font-weight-medium"
+          >
+            Close
+          </v-btn>
+        </div>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -287,12 +269,43 @@ watch(() => props.dialog, (newValue) => {
 </script>
 
 <style scoped>
-.section-divider {
-  border-bottom: 1px solid #e0e0e0;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1.5rem;
+.nomination-details-modal {
+  border-radius: 12px;
 }
-.section-divider:last-of-type {
-  border-bottom: none;
+
+.close-btn {
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+  transform: scale(1.1);
+}
+
+.info-field {
+  margin-bottom: 8px;
+}
+
+.info-field label {
+  display: block;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-field p {
+  margin: 0;
+  padding: 8px 12px;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 6px;
+  border-left: 3px solid var(--v-primary-base);
+}
+
+.gap-3 {
+  gap: 12px;
+}
+
+.w-100 {
+  width: 100%;
 }
 </style> 

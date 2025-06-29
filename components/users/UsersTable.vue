@@ -42,7 +42,7 @@
           </v-tooltip>
         </td>
         <td class="border border-gray-300">
-          <div class="d-flex justify-end">
+          <div class="d-flex justify-center">
             <v-btn 
               icon="mdi-eye" 
               variant="text" 
@@ -95,16 +95,16 @@ const headers = computed(() => {
     sortable: boolean;
     align?: 'start' | 'center' | 'end';
   }> = [
-    { title: 'No.', key: 'index', sortable: false },
-    { title: 'Staff Number', key: 'staff_number', sortable: true },
-    { title: 'Title', key: 'lecturer.title', sortable: true },
-    { title: 'Name', key: 'name', sortable: true },
-    { title: 'Department', key: 'department', sortable: true },
-    { title: 'Role', key: 'roles', sortable: false },
-    { title: 'Email', key: 'email', sortable: true },
-    { title: 'Phone', key: 'lecturer.phone', sortable: true },
-    { title: 'Status', key: 'is_active', sortable: true },
-    { title: 'Actions', key: 'actions', sortable: false, align: 'end' },
+    { title: 'No.', key: 'index', sortable: false, align: 'center' },
+    { title: 'Staff Number', key: 'staff_number', sortable: true, align: 'start' },
+    { title: 'Title', key: 'lecturer.title', sortable: true, align: 'start' },
+    { title: 'Name', key: 'name', sortable: true, align: 'start' },
+    { title: 'Department', key: 'department', sortable: true, align: 'start' },
+    { title: 'Role', key: 'roles', sortable: false, align: 'start' },
+    { title: 'Email', key: 'email', sortable: true, align: 'start' },
+    { title: 'Phone', key: 'lecturer.phone', sortable: true, align: 'start' },
+    { title: 'Status', key: 'is_active', sortable: true, align: 'start' },
+    { title: 'Actions', key: 'actions', sortable: false, align: 'center' },
   ];
 
   return baseHeaders;

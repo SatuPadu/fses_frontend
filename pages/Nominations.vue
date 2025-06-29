@@ -9,7 +9,7 @@
         </div> -->
         <!-- Filters -->
         <div class="mb-4 mt-4">
-          <NominationFilters @filters-updated="handleFiltersUpdated" />
+          <NominationFilters @filters-updated="handleFiltersUpdated" :from-nominations="true" />
         </div>
         <!-- Nominations Table -->
         <UiParentCard class="mt-4" :showTitle="false">

@@ -78,10 +78,11 @@ const fetchNominations = async () => {
 
   loading.value = true;
   try {
-    // Add chairperson_assigned=true to filters
+    // Add chairperson_assigned=true and department_specific=true to filters
     const filtersWithChairperson = {
       ...activeFilters.value,
-      chairperson_assigned: true
+      chairperson_assigned: true,
+      department_specific: true
     };
 
     const response = await nominationManagement.getNominations({

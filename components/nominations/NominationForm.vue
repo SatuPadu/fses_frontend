@@ -5,7 +5,6 @@
       <v-overlay
         :model-value="loadingModal"
         contained
-        persistent
         class="align-center justify-center"
       >
         <v-progress-circular

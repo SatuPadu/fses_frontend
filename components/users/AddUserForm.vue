@@ -34,8 +34,21 @@
                                 @blur="formData.name = formData.name?.trim()"
                             ></v-text-field>
                         </v-col>
+                        <v-col cols="12" sm="6">
+                            <v-label class="font-weight-bold mb-1">Role*</v-label>
+                            <v-select
+                                v-model="formData.role"
+                                :items="roleItems"
+                                density="compact"
+                                variant="outlined"
+                                :error-messages="formErrors.role"
+                                :loading="enumsStore.loading"
+                                required
+                                @update:model-value="handleRoleChange"
+                            ></v-select>
+                        </v-col>
                          <v-col cols="12" sm="6">
-                            <v-label class="font-weight-bold mb-1">Title*</v-label>
+                            <v-label class="font-weight-bold mb-1">Title<span v-if="formData.role !== 'OfficeAssistant'">*</span></v-label>
                             <v-select
                                 v-model="formData.title"
                                 :items="titleItems"
@@ -43,9 +56,11 @@
                                 variant="outlined"
                                 :error-messages="formErrors.title"
                                 :loading="enumsStore.loading"
-                                required
+                                :required="formData.role !== 'OfficeAssistant'"
+                                :disabled="formData.role === 'OfficeAssistant'"
                             ></v-select>
                         </v-col>
+                        
                         <v-col cols="12" sm="6">
                             <v-label class="font-weight-bold mb-1">Department*</v-label>
                             <v-select
@@ -56,9 +71,10 @@
                                 :error-messages="formErrors.department"
                                 :loading="enumsStore.loading"
                                 required
+                                :disabled="formData.role === 'OfficeAssistant'"
                             ></v-select>
                         </v-col>
-                        <v-col cols="12">
+                        <v-col cols="6">
                             <v-label class="font-weight-bold mb-1">Email*</v-label>
                             <v-text-field
                                 v-model="formData.email"
@@ -67,7 +83,7 @@
                                 variant="outlined"
                                 :error-messages="formErrors.email"
                                 required
-                                @blur="formData.email = formData.email?.trim()"
+                                @blur="validateEmailOnBlur"
                             ></v-text-field>
                         </v-col>
                         <v-col cols="12" sm="6">
@@ -88,16 +104,6 @@
                                 variant="outlined"
                                 :error-messages="formErrors.specialization"
                                 @blur="formData.specialization = formData.specialization?.trim()"
-                            ></v-text-field>
-                        </v-col>
-                        <v-col cols="12">
-                            <v-label class="font-weight-bold mb-1">External Institution</v-label>
-                            <v-text-field
-                                v-model="formData.external_institution"
-                                density="compact"
-                                variant="outlined"
-                                :error-messages="formErrors.external_institution"
-                                @blur="formData.external_institution = formData.external_institution?.trim()"
                             ></v-text-field>
                         </v-col>
                     </v-row>
@@ -157,10 +163,10 @@ const formData = ref({
     staff_number: '',
     name: '',
     title: null as string | null,
+    role: null as string | null,
     email: '',
     department: null as string | null,
     phone: '',
-    external_institution: '',
     specialization: '',
 });
 
@@ -170,6 +176,7 @@ const loading = ref(false);
 
 const titleItems = computed(() => enumsStore.getTitleOptions());
 const departmentItems = computed(() => enumsStore.getDepartmentOptions());
+const roleItems = computed(() => enumsStore.getRoleOptions());
 
 const toggleDialog = () => {
     emits('toggle-dialog');
@@ -180,7 +187,8 @@ const validateForm = () => {
 
     if (!formData.value.staff_number) errors.staff_number = 'Staff number is required';
     if (!formData.value.name) errors.name = 'Name is required';
-    if (!formData.value.title) errors.title = 'Title is required';
+    if (formData.value.role !== 'OfficeAssistant' && !formData.value.title) errors.title = 'Title is required';
+    if (!formData.value.role) errors.role = 'Role is required';
     if (!formData.value.department) errors.department = 'Department is required';
 
     // Email validation
@@ -211,7 +219,19 @@ const handleSubmit = async () => {
     } catch (error: any) {
         // Handle API errors (e.g., validation)
         if (error.response && error.response.data && error.response.data.errors) {
-            formErrors.value = error.response.data.errors;
+            // Transform backend error format to match our form structure
+            const backendErrors = error.response.data.errors;
+            const transformedErrors: Record<string, string> = {};
+            
+            Object.keys(backendErrors).forEach(key => {
+                if (Array.isArray(backendErrors[key])) {
+                    transformedErrors[key] = backendErrors[key][0]; // Take first error message
+                } else {
+                    transformedErrors[key] = backendErrors[key];
+                }
+            });
+            
+            formErrors.value = transformedErrors;
         } else {
             console.error('Error creating user:', error);
             toast.handleApiError(error, 'Failed to create user');
@@ -226,13 +246,37 @@ const resetForm = () => {
         staff_number: '',
         name: '',
         title: null,
+        role: null,
         email: '',
         department: null,
         phone: '',
-        external_institution: '',
         specialization: '',
     };
     formErrors.value = {};
+};
+
+const handleRoleChange = () => {
+    if (formData.value.role === 'OfficeAssistant') {
+        formData.value.department = 'Other';
+        formData.value.title = null;
+    } else {
+        if (formData.value.department === 'Other') {
+            formData.value.department = null;
+        }   
+    }
+};
+
+const validateEmailOnBlur = () => {
+    formData.value.email = formData.value.email?.trim();
+    const emailValidation = validateEmail(formData.value.email);
+    if (!emailValidation.valid) {
+        formErrors.value.email = emailValidation.message;
+    } else {
+        // Clear email error if validation passes
+        if (formErrors.value.email) {
+            delete formErrors.value.email;
+        }
+    }
 };
 
 watch(() => props.dialog, (newVal) => {

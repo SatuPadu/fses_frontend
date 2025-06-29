@@ -82,7 +82,7 @@
           </div>
         </td>
         <td v-if="canEditNominations || canCreateNominations || canViewNominations || canPostponeNominations" class="border border-gray-300">
-          <div class="d-flex justify-end">
+          <div class="d-flex justify-center">
             <v-btn 
               v-if="canViewNominations"
               icon="mdi-eye"
@@ -146,15 +146,21 @@ const {
   canPostponeNominations 
 } = usePermissions();
 
-const headers = [
-  { title: 'No.', key: 'index', sortable: false, width: '60px' },
-  { title: 'Student', key: 'student_name', sortable: true, width: '200px' },
-  { title: 'Program', key: 'program', sortable: true, width: '150px' },
-  { title: 'Co-Supervisor', key: 'co_supervisor', sortable: true, width: '180px' },
-  { title: 'Status', key: 'nomination_status', sortable: true, width: '120px' },
-  { title: 'Examiners', key: 'examiners', sortable: false, width: '200px' },
-  { title: 'Chairperson', key: 'chairperson', sortable: false, width: '180px' },
-  { title: 'Actions', key: 'actions', sortable: false, width: '120px' },
+const headers: Array<{
+    title: string;
+    key: string;
+    sortable: boolean;
+    width?: string;
+    align?: 'start' | 'center' | 'end';
+  }> = [
+  { title: 'No.', key: 'index', sortable: false, width: '60px', align: 'center' },
+  { title: 'Student', key: 'student_name', sortable: true, width: '200px', align: 'start' },
+  { title: 'Program', key: 'program', sortable: true, width: '150px', align: 'start' },
+  { title: 'Co-Supervisor', key: 'co_supervisor', sortable: true, width: '180px', align: 'start' },
+  { title: 'Status', key: 'nomination_status', sortable: true, width: '120px', align: 'start' },
+  { title: 'Examiners', key: 'examiners', sortable: false, width: '200px', align: 'start' },
+  { title: 'Chairperson', key: 'chairperson', sortable: false, width: '180px', align: 'start' },
+  { title: 'Actions', key: 'actions', sortable: false, width: '120px', align: 'center' },
 ];
 
 const getStatusColor = (status: string) => {

@@ -11,15 +11,15 @@
     >
       <template v-slot:item="{ item, index }">
         <tr>
-          <td class="border border-gray-300">{{ (page - 1) * itemsPerPage + index + 1 }}</td>
-          <td class="border border-gray-300">{{ item.matric_number }}</td>
-          <td class="border border-gray-300">{{ item.name }}</td>
-          <td class="border border-gray-300">{{ item.email }}</td>
-          <td class="border border-gray-300">{{ item.program?.program_name || '-' }}</td>
-          <td class="border border-gray-300">{{ item.current_semester }}</td>
-          <td class="border border-gray-300">{{ item.program?.department || '-' }}</td>
-          <td class="border border-gray-300">{{ getSupervisorDisplayName(item.main_supervisor) }}</td>
-          <td v-if="!isOfficeAssistant" class="border border-gray-300">
+          <td class="border border-gray-300 text-center">{{ (page - 1) * itemsPerPage + index + 1 }}</td>
+          <td class="border border-gray-300 text-start">{{ item.matric_number }}</td>
+          <td class="border border-gray-300 text-start">{{ item.name }}</td>
+          <td class="border border-gray-300 text-start">{{ item.email }}</td>
+          <td class="border border-gray-300 text-start">{{ item.program?.program_name || '-' }}</td>
+          <td class="border border-gray-300 text-start">{{ item.current_semester }}</td>
+          <td class="border border-gray-300 text-start">{{ item.program?.department || '-' }}</td>
+          <td class="border border-gray-300 text-start">{{ getSupervisorDisplayName(item.main_supervisor) }}</td>
+          <td v-if="!isOfficeAssistant" class="border border-gray-300 text-start">
             <v-chip
               v-for="role in item.user_roles"
               :key="role"
@@ -32,8 +32,8 @@
             </v-chip>
             <span v-if="!item.user_roles || item.user_roles.length === 0">-</span>
           </td>
-          <td class="border border-gray-300">
-            <div class="d-flex justify-end">
+          <td class="border border-gray-300 text-center">
+            <div class="d-flex justify-center">
               <v-btn 
                 icon="mdi-eye" 
                 variant="text" 
@@ -97,16 +97,16 @@ const headers = computed(() => {
     sortable: boolean;
     align?: 'start' | 'center' | 'end';
   }> = [
-    { title: 'No.', key: 'index', sortable: false },
-    { title: 'Matric Number', key: 'matric_number', sortable: true },
-    { title: 'Name', key: 'name', sortable: true },
-    { title: 'Email', key: 'email', sortable: true },
-    { title: 'Program', key: 'program.program_name', sortable: true },
-    { title: 'Current Semester', key: 'current_semester', sortable: true },
-    { title: 'Department', key: 'program.department', sortable: true },
-    { title: 'Research Supervisor', key: 'main_supervisor.name', sortable: true },
+    { title: 'No.', key: 'index', sortable: false, align: 'center' },
+    { title: 'Matric Number', key: 'matric_number', sortable: true, align: 'start' },
+    { title: 'Name', key: 'name', sortable: true, align: 'start' },
+    { title: 'Email', key: 'email', sortable: true, align: 'start' },
+    { title: 'Program', key: 'program.program_name', sortable: true, align: 'start' },
+    { title: 'Current Semester', key: 'current_semester', sortable: true, align: 'start' },
+    { title: 'Department', key: 'program.department', sortable: true, align: 'start' },
+    { title: 'Research Supervisor', key: 'main_supervisor.name', sortable: true, align: 'start' },
     ...(isOfficeAssistant.value ? [] : [{ title: 'My Role', key: 'user_roles', sortable: true }]),
-    { title: 'Actions', key: 'actions', sortable: false, align: 'end' },
+    { title: 'Actions', key: 'actions', sortable: false, align: 'center' },
   ];
 
   return baseHeaders;
