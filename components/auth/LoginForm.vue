@@ -21,7 +21,8 @@
         color="primary"
         :disabled="loading"
         @keyup.enter="handleLogin"
-        placeholder="Enter your password"
+        placeholder="Enter your password (8-16 characters)"
+        maxlength="16"
       ></v-text-field>
     </v-col>
 

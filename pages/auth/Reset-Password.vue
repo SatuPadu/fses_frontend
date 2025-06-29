@@ -35,11 +35,12 @@
                     hide-details
                     color="primary"
                     :disabled="state.loading"
-                    :rules="[rules.required, rules.min, rules.alphanumeric]"
+                    :rules="[rules.required, rules.min, rules.max, rules.alphanumeric]"
                     placeholder="Enter new password"
+                    maxlength="16"
                   ></v-text-field>
                   <div class="text-caption text-grey mt-1">
-                    Password must be at least 8 characters long and contain only letters and numbers.
+                    Password must be between 8 and 16 characters long and contain only letters and numbers.
                   </div>
                 </v-col>
 
@@ -52,9 +53,10 @@
                     hide-details
                     color="primary"
                     :disabled="state.loading"
-                    :rules="[rules.required, rules.min, rules.alphanumeric, rules.match]"
+                    :rules="[rules.required, rules.min, rules.max, rules.alphanumeric, rules.match]"
                     @keyup.enter="handleSetPassword"
                     placeholder="Confirm new password"
+                    maxlength="16"
                   ></v-text-field>
                 </v-col>
                 <v-col cols="12" class="pt-0">
@@ -139,6 +141,7 @@ const ALPHANUMERIC_REGEX = /^[a-zA-Z0-9]+$/;
 const rules = {
   required: (v: string) => !!v || 'This field is required',
   min: (v: string) => v.length >= 8 || 'Password must be at least 8 characters',
+  max: (v: string) => v.length <= 16 || 'Password must be at most 16 characters',
   alphanumeric: (v: string) => ALPHANUMERIC_REGEX.test(v) || 'Password must contain only letters and numbers',
   match: (v: string) => v === formData.password || 'Passwords do not match'
 };
@@ -148,19 +151,18 @@ const validatePassword = (password: string, confirmation: string) => {
   if (!password) {
     return { valid: false, message: 'Password is required' };
   }
-
   if (password.length < 8) {
     return { valid: false, message: 'Password must be at least 8 characters long' };
   }
-
+  if (password.length > 16) {
+    return { valid: false, message: 'Password must be at most 16 characters long' };
+  }
   if (!ALPHANUMERIC_REGEX.test(password)) {
     return { valid: false, message: 'Password must contain only letters and numbers' };
   }
-
   if (password !== confirmation) {
     return { valid: false, message: 'Passwords do not match' };
   }
-
   return { valid: true, message: '' };
 };
 
