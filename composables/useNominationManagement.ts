@@ -29,7 +29,7 @@ export const useNominationManagement = () => {
 
   const getNominations = async (options: { 
     page: number, 
-    perPage: number, 
+    per_page: number, 
     sortBy: string, 
     sortOrder: string, 
     filters: Record<string, any> 
@@ -40,7 +40,7 @@ export const useNominationManagement = () => {
       // Build query parameters
       const queryParams: Record<string, string> = {
         page: options.page.toString(),
-        per_page: options.perPage.toString(),
+        per_page: options.per_page.toString(),
         sortBy: options.sortBy,
         sortOrder: options.sortOrder,
       };

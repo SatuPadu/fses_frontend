@@ -87,7 +87,7 @@ const fetchNominations = async () => {
 
     const response = await nominationManagement.getNominations({
       page: pagination.page,
-      perPage: pagination.itemsPerPage,
+      per_page: pagination.itemsPerPage,
       sortBy: pagination.sortBy.length ? pagination.sortBy[0].key : 'student_name',
       sortOrder: pagination.sortBy.length ? pagination.sortBy[0].order : 'desc',
       filters: filtersWithChairperson

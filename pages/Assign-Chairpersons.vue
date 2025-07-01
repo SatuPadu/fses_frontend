@@ -45,7 +45,7 @@
             variant="flat"
             @click="saveAssignments"
             :loading="saving"
-            :disabled="assignments.length === 0"
+            :disabled="assignments.length === 0 || hasValidationErrors"
             prepend-icon="mdi-content-save"
           >
             Save Assignments
@@ -59,6 +59,21 @@
           >
             Clear All
           </v-btn>
+        </div>
+        
+        <!-- Validation Error Display -->
+        <div v-if="hasValidationErrors && assignments.length > 0" class="mt-4">
+          <v-alert
+            type="warning"
+            variant="tonal"
+            :title="validationErrorTitle"
+            :text="validationErrorMessage"
+            class="mb-4"
+          >
+            <template #prepend>
+              <v-icon icon="mdi-alert-circle" />
+            </template>
+          </v-alert>
         </div>
       </v-col>
     </v-row>
@@ -92,7 +107,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue';
+import { ref, reactive, onMounted, watch, computed } from 'vue';
 import UiParentCard from '~/components/shared/UiParentCard.vue';
 import NominationFilters from '~/components/nominations/NominationFilters.vue';
 import AssignChairpersonsTable from '~/components/nominations/AssignChairpersonsTable.vue';
@@ -132,6 +147,91 @@ const pagination = reactive({
   sortBy: [{ key: 'student_name', order: 'desc' as 'asc' | 'desc' }],
 });
 
+// Validation state
+const hasValidationErrors = ref(false);
+const validationErrorTitle = ref('');
+const validationErrorMessage = ref('');
+
+// Validation computed properties
+const validationErrors = computed(() => {
+  const errors: string[] = [];
+  
+  if (assignments.value.length === 0) {
+    return errors;
+  }
+  
+  // Check for duplicate evaluation assignments
+  const evaluationIds = assignments.value.map(a => a.evaluation_id);
+  const duplicateEvaluations = evaluationIds.filter((id, index) => evaluationIds.indexOf(id) !== index);
+  if (duplicateEvaluations.length > 0) {
+    errors.push(`Duplicate assignments found for ${duplicateEvaluations.length} evaluation(s)`);
+  }
+  
+  // Check for invalid chairperson IDs
+  const invalidChairpersons = assignments.value.filter(a => !a.chairperson_id || a.chairperson_id <= 0);
+  if (invalidChairpersons.length > 0) {
+    errors.push(`${invalidChairpersons.length} assignment(s) have invalid chairperson IDs`);
+  }
+  
+  // Check for invalid evaluation IDs
+  const validEvaluationIds = nominations.value.map(n => n.id);
+  const invalidEvaluations = assignments.value.filter(a => !validEvaluationIds.includes(a.evaluation_id));
+  if (invalidEvaluations.length > 0) {
+    errors.push(`${invalidEvaluations.length} assignment(s) have invalid evaluation IDs`);
+  }
+  
+  // Check for assignments to evaluations that already have chairpersons
+  const nominationsWithChairpersons = nominations.value.filter(n => n.chairperson);
+  const conflictingAssignments = assignments.value.filter(a => 
+    nominationsWithChairpersons.some(n => n.id === a.evaluation_id)
+  );
+  if (conflictingAssignments.length > 0) {
+    errors.push(`${conflictingAssignments.length} evaluation(s) already have chairpersons assigned`);
+  }
+  
+  // Check for professor constraints (professors can only be assigned to specific programs)
+  const professorConstraints = assignments.value.filter(a => {
+    const nomination = nominations.value.find(n => n.id === a.evaluation_id);
+    const chairperson = nominations.value.find(n => n.chairperson?.id === a.chairperson_id)?.chairperson;
+    
+    if (nomination && chairperson) {
+      // Check if chairperson is a professor and has department constraints
+      const chairpersonTitle = chairperson.title?.toLowerCase() || '';
+      const isProfessor = chairpersonTitle.includes('professor');
+      
+      if (isProfessor) {
+        // Professors can only be assigned to their own department
+        const chairpersonDept = chairperson.department;
+        const studentDept = nomination.student?.department;
+        
+        if (chairpersonDept && studentDept && chairpersonDept !== studentDept) {
+          return true; // This is a constraint violation
+        }
+      }
+    }
+    return false;
+  });
+  
+  if (professorConstraints.length > 0) {
+    errors.push(`${professorConstraints.length} professor assignment(s) violate department constraints`);
+  }
+  
+  return errors;
+});
+
+// Watch for validation errors
+watch(validationErrors, (errors) => {
+  hasValidationErrors.value = errors.length > 0;
+  
+  if (errors.length > 0) {
+    validationErrorTitle.value = 'Validation Errors Detected';
+    validationErrorMessage.value = errors.join('. ');
+  } else {
+    validationErrorTitle.value = '';
+    validationErrorMessage.value = '';
+  }
+}, { immediate: true });
+
 // Fetch nominations from API with chairperson_assigned=false (not yet assigned)
 const fetchNominations = async () => {
   if (!canAssignChairpersons.value) {
@@ -149,7 +249,7 @@ const fetchNominations = async () => {
 
     const response = await nominationManagement.getNominations({
       page: pagination.page,
-      perPage: pagination.itemsPerPage,
+      per_page: pagination.itemsPerPage,
       sortBy: pagination.sortBy.length ? pagination.sortBy[0].key : 'student_name',
       sortOrder: pagination.sortBy.length ? pagination.sortBy[0].order : 'desc',
       filters: filtersWithChairperson
@@ -243,6 +343,12 @@ const smartAutoAssignChairpersons = async () => {
 const saveAssignments = () => {
   if (assignments.value.length === 0) {
     toast.warning('No Assignments', 'No assignments to save');
+    return;
+  }
+  
+  // Check for validation errors first
+  if (hasValidationErrors.value) {
+    toast.error('Validation Errors', 'Please fix the validation errors before saving');
     return;
   }
   

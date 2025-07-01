@@ -1,6 +1,6 @@
 import { ref } from 'vue';
-import { useAuth, useAuthStore } from '~/composables/useAuth';
-import type { User, Lecturer, Role, ImportStatus, ImportResponse } from '~/types/global';
+import { useAuthStore } from '~/composables/useAuth';
+import type { ImportStatus, ImportResponse } from '~/types/global';
 
 export const useUserManagement = () => {
   const authStore = useAuthStore();
@@ -17,14 +17,14 @@ export const useUserManagement = () => {
     };
   };
 
-  const getUsers = async (options: { page: number, perPage: number, sortBy: string, sortOrder: string, filters: Record<string, any> }) => {
+  const getUsers = async (options: { page: number, per_page: number, sortBy: string, sortOrder: string, filters: Record<string, any> }) => {
     loading.value = true;
     error.value = null;
     try {
       // Build query parameters
       const queryParams: Record<string, string> = {
         page: options.page.toString(),
-        perPage: options.perPage.toString(),
+        per_page: options.per_page.toString(),
         sortBy: options.sortBy,
         sortOrder: options.sortOrder,
       };
@@ -70,14 +70,14 @@ export const useUserManagement = () => {
     }
   };
 
-  const getLecturers = async (options: { page: number, perPage: number, sortBy: string, sortOrder: string, filters: Record<string, any> }) => {
+  const getLecturers = async (options: { page: number, per_page: number, sortBy: string, sortOrder: string, filters: Record<string, any> }) => {
     loading.value = true;
     error.value = null;
     try {
       // Build query parameters
       const params = new URLSearchParams({
         page: options.page.toString(),
-        perPage: options.perPage.toString(),
+        per_page: options.per_page.toString(),
         sortBy: options.sortBy,
         sortOrder: options.sortOrder,
         ...options.filters,
@@ -110,14 +110,14 @@ export const useUserManagement = () => {
     }
   };
 
-  const getStudents = async (options: { page: number, perPage: number, sortBy: string, sortOrder: string, filters: Record<string, any> }) => {
+  const getStudents = async (options: { page: number, per_page: number, sortBy: string, sortOrder: string, filters: Record<string, any> }) => {
     loading.value = true;
     error.value = null;
     try {
       // Build query parameters
       const queryParams: Record<string, string> = {
         page: options.page.toString(),
-        perPage: options.perPage.toString(),
+        per_page: options.per_page.toString(),
         sortBy: options.sortBy,
         sortOrder: options.sortOrder,
       };
@@ -160,14 +160,14 @@ export const useUserManagement = () => {
     }
   };
 
-  const getPrograms = async (options: { page: number, perPage: number, sortBy: string, sortOrder: string, filters: Record<string, any> }) => {
+  const getPrograms = async (options: { page: number, per_page: number, sortBy: string, sortOrder: string, filters: Record<string, any> }) => {
     loading.value = true;
     error.value = null;
     try {
       // Build query parameters
       const queryParams: Record<string, string> = {
         page: options.page.toString(),
-        perPage: options.perPage.toString(),
+        per_page: options.per_page.toString(),
         sortBy: options.sortBy,
         sortOrder: options.sortOrder,
       };
@@ -927,6 +927,31 @@ export const useUserManagement = () => {
     }
   };
 
+  const nominationsExport = async (body: any) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await fetch(`${import.meta.env.API_BASE_URL}/students/export`, {
+        method: 'POST',
+        headers: {
+          ...getHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to export students');
+      }
+      const blob = await response.blob();
+      return blob;
+    } catch (e: any) {
+      error.value = e.message || 'Failed to export students';
+      throw e;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     loading,
     error,
@@ -959,5 +984,6 @@ export const useUserManagement = () => {
     getCoSupervisors,
     getProgramsByDepartment,
     getStudentDetail,
+    nominationsExport,
   };
 }; 

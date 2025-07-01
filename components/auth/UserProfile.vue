@@ -11,7 +11,7 @@
         </v-avatar>
 
         <div class="">
-          <h2 class="text-xl font-bold mb-1">{{ userName }}</h2>
+          <h2 class="text-xl font-bold mb-4">{{ userName }}</h2>
           <div class="flex flex-wrap gap-2">
             <v-chip
               v-for="role in userRoleOptions"
@@ -54,7 +54,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useEnumsStore } from '~/stores/enums';
-import { usePermissions } from '~/composables/usePermissions';
 import type { User } from '@/types/auth';
 
 // Define props with TypeScript interface
@@ -81,7 +80,7 @@ const props = defineProps({
 const enumsStore = useEnumsStore();
 
 // Computed properties
-const userName = computed(() => props.user?.name || '');
+const userName = computed(() => props.user?.lecturer?.title ? `${props.user.lecturer.title} ${props.user.lecturer.name}` : props.user?.name || '');
 const userRoleOptions = computed(() => enumsStore.getMyRoleOptions());
 
 // Helper function to format date

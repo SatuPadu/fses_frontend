@@ -7,7 +7,7 @@
         <DashboardReportFilters @filters-updated="handleFiltersUpdated" />
       </div>
       <!-- Export Button -->
-      <div class="d-flex justify-end mb-2">
+      <div class="d-flex justify-end mb-2" v-if="permissions.isProgramCoordinator.value || permissions.isPGAM.value">
         <v-btn color="primary" variant="outlined" @click="exportReport">
           <v-icon left>mdi-download</v-icon>
           Export
@@ -69,9 +69,15 @@ import ExaminerSessions from '~/components/dashboard/ExaminerSessions.vue';
 import ChairpersonSessions from '~/components/dashboard/ChairpersonSessions.vue';
 import { useReports } from '~/composables/useReports';
 import { useNominationManagement } from '~/composables/useNominationManagement';
+import { usePermissions } from '~/composables/usePermissions';
+import { useUserManagement } from '~/composables/useUserManagement';
+import { useToast } from '~/composables/useToast';
 
 const reportsApi = useReports();
 const nominationManagement = useNominationManagement();
+const permissions = usePermissions();
+const userManagement = useUserManagement();
+const toast = useToast();
 
 // State
 const reports = ref([]);
@@ -197,7 +203,7 @@ async function fetchReports() {
   try {
     const options = {
       page: pagination.page,
-      perPage: pagination.itemsPerPage,
+      per_page: pagination.itemsPerPage,
       sortBy: pagination.sortBy[0]?.key || 'student_name',
       sortOrder: pagination.sortBy[0]?.order || 'desc',
       filters: {
@@ -226,81 +232,32 @@ async function fetchReports() {
 
 async function exportReport() {
   try {
-    // Create export options with all data (no pagination)
-    const exportOptions = {
-      page: 1,
-      perPage: 10000, // Large number to get all data
-      sortBy: pagination.sortBy[0]?.key || 'student_name',
-      sortOrder: pagination.sortBy[0]?.order || 'desc',
-      filters: {
-        ...activeFilters.value,
-        // Add any additional filters needed for reports
-      }
+    // Remove null/empty filters
+    const cleanedFilters = Object.fromEntries(
+      Object.entries(activeFilters.value).filter(([_, v]) => v !== null && v !== undefined && v !== '')
+    );
+    const exportBody = {
+      columns: [
+        "no", "student_name", "program", "evaluation_type", "research_title",
+        "current_semester", "main_supervisor", "co_supervisor",
+        "examiner_1", "examiner_2", "examiner_3", "chairperson"
+      ],
+      format: "xlsx",
+      filters: cleanedFilters
     };
-
-    const data = await nominationManagement.getNominations(exportOptions);
-    
-    if (data && data.data && data.data.items) {
-      // Convert data to CSV format
-      const csvContent = convertToCSV(data.data.items);
-      
-      // Create and download CSV file
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `reports_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+    const blob = await userManagement.nominationsExport(exportBody);
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `evaluations_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
   } catch (e) {
     console.error('Failed to export report:', e);
-    // You might want to show a toast notification here
+    toast.handleApiError(e, 'Failed to export report');
   }
-}
-
-function convertToCSV(data: any[]) {
-  if (!data || data.length === 0) return '';
-  
-  // Define CSV headers based on the data structure
-  const headers = [
-    'Student Name',
-    'Matric Number',
-    'Program',
-    'Department',
-    'Supervisor',
-    'Co-Supervisors',
-    'Examiner 1',
-    'Examiner 2', 
-    'Examiner 3',
-    'Chairperson',
-    'Status',
-    'Academic Year'
-  ];
-  
-  const csvRows = [headers.join(',')];
-  
-  data.forEach(item => {
-    const row = [
-      `"${item.student?.name || ''}"`,
-      `"${item.student?.matric_number || ''}"`,
-      `"${item.student?.program?.program_name || ''}"`,
-      `"${item.student?.program?.department || ''}"`,
-      `"${item.student?.supervisor?.name || ''}"`,
-      `"${item.student?.co_supervisors?.map((cs: any) => cs.lecturer?.name || cs.external_name).join('; ') || ''}"`,
-      `"${item.examiner1?.name || ''}"`,
-      `"${item.examiner2?.name || ''}"`,
-      `"${item.examiner3?.name || ''}"`,
-      `"${item.chairperson?.name || ''}"`,
-      `"${item.nomination_status || ''}"`,
-      `"${item.academic_year || ''}"`
-    ];
-    csvRows.push(row.join(','));
-  });
-  
-  return csvRows.join('\n');
 }
 
 function handleFiltersUpdated(filters: any) {

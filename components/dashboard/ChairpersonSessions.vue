@@ -35,17 +35,31 @@
   
         <!-- Main Content -->
         <v-row>
-          <v-col cols="7" sm="7">
-            <div class="mt-2">
-              <!-- Loading State -->
-              <div v-if="loading" class="d-flex justify-center">
-                <v-progress-circular indeterminate color="primary" />
+          <!-- Loading State -->
+          <template v-if="loading">
+            <v-col cols="12" class="d-flex justify-center align-center" style="min-height: 200px;">
+              <v-progress-circular indeterminate color="primary" />
+            </v-col>
+          </template>
+          
+          <!-- No Data State -->
+          <template v-else-if="!props.summary || !localYear">
+            <v-col cols="12" class="d-flex justify-center align-center" style="min-height: 200px;">
+              <div class="text-center">
+                <v-icon size="48" color="grey-lighten-1" class="mb-3">mdi-chart-donut</v-icon>
+                <div class="text-body-1 text-medium-emphasis">
+                  Select chairperson and year to view sessions
+                </div>
               </div>
-              
-              <!-- Data Display -->
-              <template v-else>                
+            </v-col>
+          </template>
+          
+          <!-- Data Display -->
+          <template v-else>
+            <v-col cols="7" sm="7">
+              <div class="mt-2">
                 <!-- Growth Indicator -->
-                <div class="mt-1" v-if="props.summary && localYear">
+                <div class="mt-1">
                   <v-avatar class="bg-lightsuccess text-success" size="25">
                     <v-icon size="20">mdi-trending-up</v-icon>
                   </v-avatar>
@@ -53,13 +67,8 @@
                   <span class="text-subtitle-1 text-muted ml-2">of Maximum Sessions</span>
                 </div>
                 
-                <!-- No Data Message -->
-                <div v-else class="text-caption text-muted mt-2">
-                  Select chairperson and year to view sessions
-                </div>
-                
                 <!-- Legend -->
-                <div class="d-flex align-center mt-sm-10 mt-8" v-if="props.summary && localYear">
+                <div class="d-flex align-center mt-sm-10 mt-8">
                   <h6 class="text-subtitle-1 text-muted">
                     <v-icon
                       icon="mdi-checkbox-blank-circle"
@@ -79,14 +88,12 @@
                     Can Chair
                   </h6>
                 </div>
-              </template>
-            </div>
-          </v-col>
-          
-          <!-- Chart Section -->
-          <v-col cols="5" sm="5" class="pl-lg-0">
-            <div class="d-flex align-center flex-shrink-0 justify-center position-relative">
-              <template v-if="!loading && props.summary && localYear">
+              </div>
+            </v-col>
+            
+            <!-- Chart Section -->
+            <v-col cols="5" sm="5" class="pl-lg-0">
+              <div class="d-flex align-center flex-shrink-0 justify-center position-relative">
                 <apexchart
                   class="pt-6"
                   type="donut"
@@ -98,9 +105,9 @@
                 <div class="position-absolute d-flex flex-column align-center justify-center" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
                   <div class="text-h4 font-weight-bold mt-4">{{ props.summary }}/4</div>
                 </div>
-              </template>
-            </div>
-          </v-col>
+              </div>
+            </v-col>
+          </template>
         </v-row>
       </v-card-item>
     </v-card>

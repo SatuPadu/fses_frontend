@@ -128,7 +128,7 @@ const fetchPrograms = async () => {
   try {
     const response = await userManagement.getPrograms({
       page: pagination.page,
-      perPage: pagination.itemsPerPage,
+      per_page: pagination.itemsPerPage,
       sortBy: pagination.sortBy.length ? pagination.sortBy[0].key : 'program_name',
       sortOrder: pagination.sortBy.length ? pagination.sortBy[0].order : 'desc',
       filters: activeFilters.value

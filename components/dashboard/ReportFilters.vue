@@ -2,7 +2,7 @@
   <v-card class="mb-6 elevation-2">
     <v-card-text>
       <v-row>
-        <v-col cols="12" md="4">
+        <v-col cols="12" md="4" v-if="!isProgramCoordinator">
           <v-select
             label="Department"
             :items="departmentOptions"
@@ -47,13 +47,17 @@
 import { ref, watch, onMounted, computed } from 'vue';
 import { useEnumsStore } from '~/stores/enums';
 import { useUserManagement } from '~/composables/useUserManagement';
+import { usePermissions } from '~/composables/usePermissions';
+import { useAuth } from '~/composables/useAuth';
 
 const emits = defineEmits(['filters-updated']);
 const enumsStore = useEnumsStore();
 const userManagement = useUserManagement();
+const permissions = usePermissions();
+const auth = useAuth();
 
-const filters = ref({
-  department: null  ,
+const filters = ref<{ department: string | null, program_id: string | null, evaluation_type: string | null }>({
+  department: null,
   program_id: null,
   evaluation_type: null,
 });
@@ -76,6 +80,14 @@ const programOptions = computed(() => {
 });
 const evaluationTypeOptions = computed(() => enumsStore.getEvaluationTypeOptions());
 
+const isProgramCoordinator = computed(() => permissions.isProgramCoordinator);
+const userDepartment = computed<string | null>(() => {
+  if (auth.user && typeof auth.user.department === 'string' && auth.user.department) {
+    return auth.user.department;
+  }
+  return null;
+});
+
 async function fetchPrograms() {
   if (!filters.value.department) {
     programs.value = [];
@@ -85,7 +97,7 @@ async function fetchPrograms() {
   try {
     const data = await userManagement.getPrograms({
       page: 1,
-      perPage: 1000,
+      per_page: 1000,
       sortBy: 'program_code',
       sortOrder: 'desc',
       filters: {
@@ -104,6 +116,10 @@ async function fetchPrograms() {
 onMounted(async () => {
   if (!enumsStore.enumsData) {
     await enumsStore.fetchEnums();
+  }
+  if (isProgramCoordinator.value && userDepartment.value) {
+    filters.value.department = userDepartment.value;
+    await fetchPrograms();
   }
 });
 

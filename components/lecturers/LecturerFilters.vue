@@ -36,6 +36,7 @@
             variant="outlined"
             clearable
             hide-details
+            :rules="emailRules"
             @keyup.enter="applyFilters"
             @blur="filters.email = filters.email?.trim()"
           ></v-text-field>
@@ -116,6 +117,10 @@ const filters = reactive({
   department: null as string | null,
   external_institutes: '',
 });
+
+const emailRules = [
+  (v: string) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'E-mail must be valid',
+];
 
 const departmentItems = computed(() => {
   const options = enumsStore.getDepartmentOptions();

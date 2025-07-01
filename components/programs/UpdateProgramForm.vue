@@ -89,10 +89,12 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { useEnumsStore } from '~/stores/enums';
+import { useToast } from '~/composables/useToast';
 import type { Program } from '~/types/global';
 
 const userManagement = useUserManagement();
 const enumsStore = useEnumsStore();
+const toast = useToast();
 
 const props = defineProps({
     dialog: {
@@ -157,7 +159,8 @@ const handleSubmit = async () => {
     formErrors.value = {};
 
     try {
-        await userManagement.updateProgram(props.programInfo.id.toString(), formData.value);
+        const response = await userManagement.updateProgram(props.programInfo.id.toString(), formData.value);
+        toast.handleApiSuccess(response, 'Program updated successfully');
         emits('program-updated');
         toggleDialog();
     } catch (error: any) {
@@ -165,6 +168,7 @@ const handleSubmit = async () => {
             formErrors.value = error.response.data.errors;
         } else {
             console.error('Error updating program:', error);
+            toast.handleApiError(error, 'Failed to update program');
         }
     } finally {
         loading.value = false;

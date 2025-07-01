@@ -288,14 +288,24 @@ const validateForm = () => {
 
 const fetchOptions = async () => {
     try {
-        const lecturersData = await userManagement.getAllLecturers();
-        lecturers.value = lecturersData.map((lecturer: any) => ({
-            ...lecturer,
-            displayName: `${lecturer.title ? lecturer.title + ' ' : ''}${lecturer.name}`.trim()
-        }));
+        const response = await userManagement.getAllLecturers();
+        
+        // Check if response is an array (direct data) or has a data property
+        const lecturersData = Array.isArray(response) ? response : (response?.data || []);
+        
+        if (Array.isArray(lecturersData)) {
+            lecturers.value = lecturersData.map((lecturer: any) => ({
+                ...lecturer,
+                displayName: `${lecturer.title ? lecturer.title + ' ' : ''}${lecturer.name}`.trim()
+            }));
+        } else {
+            console.error('Invalid lecturers data structure:', lecturersData);
+            lecturers.value = [];
+        }
     } catch (e: any) {
         console.error('Error fetching options:', e.message || 'Failed to fetch options');
         toast.error('Failed to fetch lecturers', 'Unable to load lecturer options');
+        lecturers.value = [];
     }
 };
 

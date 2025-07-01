@@ -142,7 +142,7 @@ const fetchUsers = async () => {
     // Call the getUsers API with the correct parameters
     const response = await userManagement.getUsers({
       page: pagination.page,
-      perPage: pagination.itemsPerPage,
+      per_page: pagination.itemsPerPage,
       sortBy: pagination.sortBy.length ? pagination.sortBy[0].key : 'name',
       sortOrder: pagination.sortBy.length ? pagination.sortBy[0].order : 'desc',
       filters: activeFilters.value

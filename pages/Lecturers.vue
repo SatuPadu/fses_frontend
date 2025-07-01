@@ -132,7 +132,7 @@ const fetchLecturers = async () => {
     // Call the getLecturers API with the correct parameters
     const response = await userManagement.getLecturers({
       page: pagination.page,
-      perPage: pagination.itemsPerPage,
+      per_page: pagination.itemsPerPage,
       sortBy: pagination.sortBy.length ? pagination.sortBy[0].key : 'name',
       sortOrder: pagination.sortBy.length ? pagination.sortBy[0].order : 'desc',
       filters: activeFilters.value

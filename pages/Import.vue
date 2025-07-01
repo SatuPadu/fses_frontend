@@ -399,37 +399,11 @@ const formatSummaryKey = (key: string | number) => {
     return keyStr.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
-// Enhanced helper methods
-const formatBasicInfo = (data: any) => {
-  const parts = [];
-  if (data.table) parts.push(`Table: ${formatTableKey(data.table)}`);
-  if (data.action) parts.push(`Action: ${formatTableKey(data.action)}`);
-  if (data.message) parts.push(data.message);
-  return parts.join(' | ') || 'Processing...';
-};
-
 const shouldShowAsTable = (key: string, value: any) => {
   return value && 
          typeof value === 'object' && 
          !Array.isArray(value) && 
          Object.keys(value).length > 0;
-};
-
-const getTableClass = (dataKey: string) => {
-  const colorMap: { [key: string]: string } = {
-    'row_data': 'bg-grey-lighten-5',
-    'lecturer_data': 'bg-blue-lighten-5',
-    'user_data': 'bg-green-lighten-5',
-    'student_data': 'bg-purple-lighten-5',
-    'course_data': 'bg-cyan-lighten-5',
-    'evaluation_data': 'bg-amber-lighten-5',
-    'data': 'bg-orange-lighten-5'
-  };
-  return colorMap[dataKey] || 'bg-teal-lighten-5';
-};
-
-const hasTableData = (data: any) => {
-  return Object.keys(data).some(key => shouldShowAsTable(key, data[key]));
 };
 
 const getSimpleData = (data: any) => {
@@ -442,24 +416,6 @@ const getSimpleData = (data: any) => {
   return simple;
 };
 
-const formatValue = (value: any) => {
-  if (value === null || value === undefined) return '-';
-  if (typeof value === 'object') return JSON.stringify(value);
-  return String(value);
-};
-
-// Updated formatDetailedLog method (simplified since we're not showing JSON anymore)
-const formatDetailedLog = (data: any) => {
-    return `Table: ${formatTableKey(data.table)} | Action: ${formatTableKey(data.action)}`;
-};
-
-// Enhanced formatTableKey method
-const formatTableKey = (key: string) => {
-    if (!key) return '';
-    return key.replace(/_/g, ' ')
-             .replace(/\b\w/g, l => l.toUpperCase())
-             .trim();
-};
 
 onUnmounted(() => {
   if (eventSource) {

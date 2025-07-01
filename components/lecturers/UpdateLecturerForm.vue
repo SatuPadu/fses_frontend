@@ -61,7 +61,9 @@
                             density="compact"
                             variant="outlined"
                             :error-messages="formErrors.email"
+                            :rules="emailRules"
                             required
+                            @blur="formData.email = formData.email?.trim()"
                         ></v-text-field>
                     </v-col>
                     <v-col cols="12" sm="6">
@@ -162,6 +164,10 @@ const formData = ref({
 // Form validation
 const formErrors = ref<Record<string, string>>({});
 const loading = ref(false);
+
+const emailRules = [
+  (v: string) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'E-mail must be valid',
+];
 
 const titleItems = computed(() => enumsStore.getTitleOptions());
 const departmentItems = computed(() => enumsStore.getDepartmentOptions());

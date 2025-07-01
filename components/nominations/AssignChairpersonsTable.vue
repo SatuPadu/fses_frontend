@@ -127,14 +127,6 @@
       </div>
     </template>
   </v-data-table-server>
-  
-  <!-- Assignment Info -->
-  <div class="mt-4 d-flex justify-end">
-    <div class="d-flex align-center text-caption text-muted">
-      <v-icon size="small" class="mr-1">mdi-information</v-icon>
-      Max {{ MAX_ASSIGNMENTS }} assignments per chairperson
-    </div>
-  </div>
 </template>
 
 <script setup lang="ts">

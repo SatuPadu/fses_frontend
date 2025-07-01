@@ -1,4 +1,22 @@
 // types/auth.ts
+export interface Lecturer {
+  id: number;
+  name: string;
+  email: string;
+  title: string;
+  phone: string | null;
+  department: string;
+  is_from_fai: boolean;
+  external_institution: string | null;
+  specialization: string | null;
+  user_id: number | null;
+  staff_number: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  user?: User;
+}
+
 export interface User {
   id: number;
   staff_number: string;
@@ -13,6 +31,7 @@ export interface User {
   created_at: string;
   updated_at: string;
   roles?: Role[];
+  lecturer?: Lecturer;
 }
 
 export interface Permission {

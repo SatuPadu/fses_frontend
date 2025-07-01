@@ -89,7 +89,7 @@
                         </div>
                         <div v-else-if="formData.program_id && semesterOptions.length > 1" class="text-caption text-info mt-1">
                             <v-icon size="small" color="info" class="mr-1">mdi-information</v-icon>
-                            Semesters {{ semesterOptions.map(s => s.value).join(', ') }} are eligible for First Stage Evaluation for this program.
+                            Semesters {{ semesterOptions.map((s: any) => s.value).join(', ') }} are eligible for First Stage Evaluation for this program.
                         </div>
                         <div v-else-if="formData.program_id" class="text-caption text-grey mt-1">
                             <v-icon size="small" color="grey" class="mr-1">mdi-information</v-icon>
@@ -257,14 +257,24 @@ const validateForm = () => {
 
 const fetchOptions = async () => {
     try {
-        const lecturersData = await userManagement.getAllLecturers();
-        lecturers.value = lecturersData.map((lecturer: any) => ({
-            ...lecturer,
-            displayName: `${lecturer.title ? lecturer.title + ' ' : ''}${lecturer.name}`.trim()
-        }));
+        const response = await userManagement.getAllLecturers();
+        
+        // Check if response is an array (direct data) or has a data property
+        const lecturersData = Array.isArray(response) ? response : (response?.data || []);
+        
+        if (Array.isArray(lecturersData)) {
+            lecturers.value = lecturersData.map((lecturer: any) => ({
+                ...lecturer,
+                displayName: `${lecturer.title ? lecturer.title + ' ' : ''}${lecturer.name}`.trim()
+            }));
+        } else {
+            console.error('Invalid lecturers data structure:', lecturersData);
+            lecturers.value = [];
+        }
     } catch (e: any) {
         console.error('Error fetching options:', e.message || 'Failed to fetch options');
         toast.error('Failed to fetch lecturers', 'Unable to load lecturer options');
+        lecturers.value = [];
     }
 };
 

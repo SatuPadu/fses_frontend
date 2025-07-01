@@ -50,7 +50,7 @@
                                 @update:model-value="handleRolesChange"
                             ></v-autocomplete>
                         </v-col>
-                        <v-col cols="12" sm="6">
+                         <v-col cols="12" sm="6">
                             <v-label class="font-weight-bold mb-1">Title<span v-if="formData.roles.length !== 1 || !formData.roles.includes('OfficeAssistant')">*</span></v-label>
                             <v-select
                                 v-model="formData.title"
@@ -84,6 +84,7 @@
                                 density="compact"
                                 variant="outlined"
                                 :error-messages="formErrors.email"
+                                :rules="emailRules"
                                 required
                                 @blur="validateEmailOnBlur"
                             ></v-text-field>
@@ -133,6 +134,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { useEnumsStore } from '~/stores/enums';
 import { useValidation } from '~/composables/useValidation';
+import { useToast } from '~/composables/useToast';
 import PermissionGuard from '~/components/shared/PermissionGuard.vue';
 import PermissionButton from '~/components/shared/PermissionButton.vue';
 import type { User } from '~/types/global';
@@ -140,6 +142,7 @@ import type { User } from '~/types/global';
 const userManagement = useUserManagement();
 const enumsStore = useEnumsStore();
 const { validateEmail } = useValidation();
+const toast = useToast();
 
 const props = defineProps({
     dialog: {
@@ -179,6 +182,10 @@ const staffNumber = ref('');
 const formErrors = ref<Record<string, string>>({});
 const loading = ref(false);
 
+const emailRules = [
+  (v: string) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'E-mail must be valid',
+];
+
 const titleItems = computed(() => enumsStore.getTitleOptions());
 const departmentItems = computed(() => enumsStore.getDepartmentOptions());
 const roleItems = computed(() => enumsStore.getRoleOptions());
@@ -213,10 +220,9 @@ const handleSubmit = async () => {
     loading.value = true;
 
     try {
-        await userManagement.updateUser(props.userInfo.id.toString(), formData.value);
-        
+        const response = await userManagement.updateUser(props.userInfo.id.toString(), formData.value);
+        toast.handleApiSuccess(response, 'User updated successfully');
         emits('user-updated');
-        
         toggleDialog();
     } catch (error: any) {
         if (error.response && error.response.data && error.response.data.errors) {
@@ -235,6 +241,7 @@ const handleSubmit = async () => {
             formErrors.value = transformedErrors;
         } else {
             console.error('Error updating user:', error);
+            toast.handleApiError(error, 'Failed to update user');
         }
     } finally {
         loading.value = false;
