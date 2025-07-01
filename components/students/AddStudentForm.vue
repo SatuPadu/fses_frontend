@@ -123,7 +123,7 @@
                         ></v-select>
                     </v-col>
                     <v-col cols="12" sm="6">
-                        <v-label class="font-weight-bold mb-1">Co-Supervisors</v-label>
+                        <v-label class="font-weight-bold mb-1">Co-Supervisor</v-label>
                         <v-select
                             v-model="formData.co_supervisor_ids"
                             :items="coSupervisors"
@@ -133,9 +133,6 @@
                             variant="outlined"
                             :error-messages="formErrors.co_supervisor_ids"
                             :loading="loadingCoSupervisors"
-                            multiple
-                            chips
-                            closable-chips
                             clearable
                             :disabled="!formData.main_supervisor_id"
                         ></v-select>
@@ -211,7 +208,7 @@ const formData = ref({
     country: '',
     main_supervisor_id: null as number | null,
     evaluation_type: null as string | null,
-    co_supervisor_ids: [] as number[],
+    co_supervisor_ids: null as number | null,
 });
 
 // Form validation
@@ -324,7 +321,7 @@ const handleDepartmentChange = async () => {
     formData.value.program_id = null;
     formData.value.current_semester = '';
     formData.value.main_supervisor_id = null;
-    formData.value.co_supervisor_ids = [];
+    formData.value.co_supervisor_ids = null;
     programs.value = [];
     semesterOptions.value = [];
     supervisors.value = [];
@@ -336,7 +333,7 @@ const handleDepartmentChange = async () => {
             // Fetch programs for the selected department
             loadingPrograms.value = true;
             const programsData = await userManagement.getProgramsByDepartment(department);
-            programs.value = programsData;
+            programs.value = programsData.items;
             
             // Fetch supervisors for the selected department
             loadingSupervisors.value = true;
@@ -357,7 +354,7 @@ const handleDepartmentChange = async () => {
 
 const handleSupervisorChange = async () => {
     // Reset dependent fields
-    formData.value.co_supervisor_ids = [];
+    formData.value.co_supervisor_ids = null;
     coSupervisors.value = [];
     
     try {
@@ -391,7 +388,7 @@ const handleSubmit = async () => {
         
         const submitData = {
             ...formData.value,
-            co_supervisors: formData.value.co_supervisor_ids || []
+            co_supervisors: formData.value.co_supervisor_ids ? [formData.value.co_supervisor_ids] : []
         };
                 
         const response = await userManagement.createStudent(submitData);
@@ -421,7 +418,7 @@ const resetForm = () => {
         country: '',
         main_supervisor_id: null,
         evaluation_type: null,
-        co_supervisor_ids: [],
+        co_supervisor_ids: null,
     };
     formErrors.value = {};
     semesterOptions.value = [];

@@ -71,14 +71,20 @@
           <v-col cols="12" sm="6">
             <div class="info-field">
               <label class="text-caption font-weight-medium text-medium-emphasis">Research Supervisor</label>
-              <p class="text-body-1 font-weight-medium">{{ nominationData?.student?.main_supervisor?.name || '-' }}</p>
+              <p class="text-body-1 font-weight-medium">
+                {{ nominationData?.student?.main_supervisor ? ((nominationData.student.main_supervisor.title ? nominationData.student.main_supervisor.title + ' ' : '') + nominationData.student.main_supervisor.name) : '-' }}
+              </p>
             </div>
           </v-col>
           
           <v-col cols="12" sm="6">
             <div class="info-field">
-              <label class="text-caption font-weight-medium text-medium-emphasis">Title</label>
-              <p class="text-body-1 font-weight-medium">{{ nominationData?.student?.main_supervisor?.title || '-' }}</p>
+              <label class="text-caption font-weight-medium text-medium-emphasis">Co-Supervisor</label>
+              <p class="text-body-1 font-weight-medium">
+                {{ nominationData?.student?.co_supervisors && nominationData.student.co_supervisors.length > 0 ? 
+                  ((nominationData.student.co_supervisors[0].lecturer?.title ? nominationData.student.co_supervisors[0].lecturer.title + ' ' : '') + nominationData.student.co_supervisors[0].lecturer?.name) : 
+                  'Not assigned' }}
+              </p>
             </div>
           </v-col>
 

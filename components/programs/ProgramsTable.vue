@@ -11,11 +11,11 @@
     >
       <template v-slot:item="{ item, index }">
         <tr>
-          <td class="border border-gray-300">{{ (page - 1) * itemsPerPage + index + 1 }}</td>
+          <td class="border border-gray-300 text-center">{{ (page - 1) * itemsPerPage + index + 1 }}</td>
           <td class="border border-gray-300">{{ item.program_name }}</td>
           <td class="border border-gray-300">{{ item.program_code }}</td>
           <td class="border border-gray-300">{{ item.department }}</td>
-          <td class="border border-gray-300">{{ item.total_semesters }}</td>
+          <td class="border border-gray-300 text-center">{{ item.total_semesters }}</td>
           <td v-if="canEditPrograms || canDeletePrograms" class="border border-gray-300">
             <div class="d-flex justify-center">
               <v-btn 

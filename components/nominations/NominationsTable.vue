@@ -11,27 +11,27 @@
   >
     <template v-slot:item="{ item, index }">
       <tr>
-        <td class="border border-gray-300">{{ (page - 1) * itemsPerPage + index + 1 }}</td>
-        <td class="border border-gray-300">
+        <td class="border border-gray-300 column-no">{{ (page - 1) * itemsPerPage + index + 1 }}</td>
+        <td class="border border-gray-300 column-student">
           <div>
             <div class="font-weight-medium">{{ item.student?.name }}</div>
             <div class="text-caption text-muted">{{ item.student?.matric_number }}</div>
           </div>
         </td>
-        <td class="border border-gray-300">
+        <td class="border border-gray-300 column-program">
           <div>
             <div class="font-weight-medium">{{ item.student?.program?.program_name }}</div>
             <div class="text-caption text-muted">Semester {{ item.student?.current_semester }}</div>
           </div>
         </td>
-        <td class="border border-gray-300">
+        <td class="border border-gray-300 column-main-supervisor">
           <div class="text-caption">
             <span v-if="item._mainSupervisor">{{ item._mainSupervisor }}</span>
             <span v-else class="text-muted">No supervisor</span>
           </div>
         </td>
 
-        <td class="border border-gray-300">
+        <td class="border border-gray-300 column-co-supervisor">
           <div>
             <div v-if="item._coSupervisors && item._coSupervisors.length">
               <div
@@ -40,11 +40,9 @@
                 class="text-caption"
               >
                 <span v-if="!co.isExternal">
-                  <strong>{{ co.label }}:</strong>
                   {{ co.name }}
                 </span>
                 <span v-else>
-                  <strong>{{ co.label }}:</strong>
                   {{ co.name }}
                 </span>
               </div>
@@ -54,7 +52,7 @@
             </div>
           </div>
         </td>
-        <td class="border border-gray-300">
+        <td class="border border-gray-300 column-status">
           <v-chip
             :color="getStatusColor(item.nomination_status)"
             :text="getStatusText(item.nomination_status)"
@@ -62,7 +60,7 @@
             variant="flat"
           />
         </td>
-        <td class="border border-gray-300">
+        <td class="border border-gray-300 column-examiners">
           <div class="d-flex flex-column gap-1">
             <div v-if="item.examiner1" class="text-caption">
               <strong>E1:</strong> {{ (item.examiner1.title ? item.examiner1.title + ' ' : '') + item.examiner1.name }}
@@ -78,17 +76,17 @@
             </div>
           </div>
         </td>
-        <td class="border border-gray-300">
+        <td class="border border-gray-300 column-chairperson">
           <div class="d-flex flex-column gap-1">
             <div v-if="item.chairperson" class="text-caption">
-              <strong>Chairperson:</strong> {{ (item.chairperson.title ? item.chairperson.title + ' ' : '') + item.chairperson.name }}
+                {{ (item.chairperson.title ? item.chairperson.title + ' ' : '') + item.chairperson.name }}
             </div>
             <div v-else class="text-caption text-muted">
               No chairperson assigned
             </div>
           </div>
         </td>
-        <td v-if="canEditNominations || canCreateNominations || canViewNominations || canPostponeNominations" class="border border-gray-300">
+        <td v-if="canEditNominations || canCreateNominations || canViewNominations || canPostponeNominations" class="border border-gray-300 column-actions">
           <div class="d-flex justify-center">
             <v-btn 
               v-if="canViewNominations"
@@ -163,15 +161,15 @@ const headers: Array<{
     width?: string;
     align?: 'start' | 'center' | 'end';
   }> = [
-  { title: 'No.', key: 'index', sortable: false, width: '60px', align: 'center' },
+  { title: 'No.', key: 'index', sortable: false, width: '80px', align: 'center' },
   { title: 'Student', key: 'student_name', sortable: false, width: '200px', align: 'start' },
-  { title: 'Program', key: 'program', sortable: false, width: '150px', align: 'start' },
-  { title: 'Research Supervisor', key: 'main_supervisor', sortable: false, width: '180px', align: 'start' },
-  { title: 'Co-Supervisor', key: 'co_supervisor', sortable: false, width: '180px', align: 'start' },
-  { title: 'Status', key: 'nomination_status', sortable: false, width: '120px', align: 'start' },
-  { title: 'Examiners', key: 'examiners', sortable: false, width: '200px', align: 'start' },
-  { title: 'Chairperson', key: 'chairperson', sortable: false, width: '180px', align: 'start' },
-  { title: 'Actions', key: 'actions', sortable: false, width: '120px', align: 'center' },
+  { title: 'Program', key: 'program', sortable: false, width: '200px', align: 'start' },
+  { title: 'Research Supervisor', key: 'main_supervisor', sortable: false, width: '250px', align: 'start' },
+  { title: 'Co-Supervisor', key: 'co_supervisor', sortable: false, width: '250px', align: 'start' },
+  { title: 'Status', key: 'nomination_status', sortable: false, width: '150px', align: 'center' },
+  { title: 'Examiners', key: 'examiners', sortable: false, width: '300px', align: 'start' },
+  { title: 'Chairperson', key: 'chairperson', sortable: false, width: '250px', align: 'start' },
+  { title: 'Actions', key: 'actions', sortable: false, width: '150px', align: 'center' },
 ];
 
 const getStatusColor = (status: string) => {
@@ -221,14 +219,12 @@ const processedNominations = computed(() => {
     const coSupervisors = (nomination.student?.co_supervisors?.map((co, idx) => {
       if (co.lecturer && typeof co.lecturer.name === 'string') {
         return {
-          label: `Co-Supervisor ${idx + 1}`,
           name: `${co.lecturer.title ? co.lecturer.title + ' ' : ''}${co.lecturer.name}`.trim(),
           isExternal: false,
         };
       } else if (co.external_name) {
         const extTitle = co.lecturer && typeof co.lecturer.title === 'string' ? co.lecturer.title + ' ' : '';
         return {
-          label: `Co-Supervisor ${idx + 1}`,
           name: `${extTitle}${co.external_name}`.trim(),
           isExternal: true,
         };
@@ -248,11 +244,32 @@ const processedNominations = computed(() => {
 <style scoped>
 .v-data-table :deep(table) {
   border-collapse: collapse;
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+
+.v-data-table :deep(.v-data-table__wrapper) {
+  border: 1px solid #e0e0e0;
+  overflow-x: auto;
+  min-width: 2000px; /* Increased to accommodate wider columns */
 }
 
 .v-data-table :deep(th) {
   border: 1px solid #e0e0e0 !important;
   background-color: #f5f5f5;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  vertical-align: top !important;
+  padding: 8px !important;
+}
+
+.v-data-table :deep(td) {
+  border: 1px solid #e0e0e0 !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  vertical-align: top !important;
+  padding: 8px !important;
 }
 
 .cursor-pointer {

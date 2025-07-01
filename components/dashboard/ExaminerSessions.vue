@@ -99,24 +99,25 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
+import type { PropType } from 'vue';
 import { useTheme } from 'vuetify';
 
 const theme = useTheme();
 const primary = computed(() => theme.current.value.colors.primary);
 
 const props = defineProps({
-  summary: { type: Object, default: null },
+  summary: { type: Object as PropType<Record<string, any> | undefined>, default: undefined },
   loading: { type: Boolean, default: false },
   examiners: { type: Array, required: true },
   academicYears: { type: Array, required: false, default: () => [] },
-  selectedExaminer: { type: String, default: null },
-  selectedYear: { type: String, default: null },
+  selectedExaminer: { type: String as PropType<string | null>, default: null },
+  selectedYear: { type: String as PropType<string | null>, default: null },
 });
 
 const emits = defineEmits(['update:examiner', 'update:year']);
 
-const localExaminer = props.selectedExaminer ? ref(props.selectedExaminer) : ref(null);
-const localYear = props.selectedYear ? ref(props.selectedYear) : ref(null);
+const localExaminer = ref<string | null>(props.selectedExaminer || null);
+const localYear = ref<string | null>(props.selectedYear || null);
 
 // Chart configuration
 const chartOptions = computed(() => {
@@ -259,11 +260,11 @@ function calculateGrowth(): string {
 }
 
 watch(() => props.selectedExaminer, (val) => { 
-  localExaminer.value = val; 
+  localExaminer.value = val || null; 
 });
 
 watch(() => props.selectedYear, (val) => { 
-  localYear.value = val; 
+  localYear.value = val || null; 
 });
 </script>
 

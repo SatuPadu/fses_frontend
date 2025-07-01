@@ -51,7 +51,7 @@
             :key="co.label || idx"
             class="text-caption"
           >
-            <strong>{{ co.label }}:</strong> {{ co.name }}
+            {{ co.name }}
             <span v-if="co.isExternal" class="text-muted ml-1">(External)</span>
           </div>
         </div>
@@ -93,7 +93,7 @@
     <template #item.chairperson="{ item }">
       <div class="text-caption">
         <div v-if="item.chairperson">
-          <strong>Chairperson:</strong> {{ item._chairperson }}
+          {{ item._chairperson }}
         </div>
         <div v-else class="text-muted">
           No chairperson assigned
@@ -141,14 +141,14 @@ const headers: Array<{
     width?: string;
     align?: 'start' | 'center' | 'end';
   }> = [
-  { title: 'No.', key: 'index', sortable: false, width: '60px', align: 'center' },
+  { title: 'No.', key: 'index', sortable: false, width: '80px', align: 'center' },
   { title: 'Student', key: 'student_name', sortable: false, width: '200px', align: 'start' },
-  { title: 'Program', key: 'program', sortable: false, width: '150px', align: 'start' },
-  { title: 'Research Supervisor', key: 'main_supervisor', sortable: false, width: '180px', align: 'start' },
-  { title: 'Co-Supervisor', key: 'co_supervisor', sortable: false, width: '180px', align: 'start' },
-  { title: 'Status', key: 'nomination_status', sortable: false, width: '120px', align: 'start' },
-  { title: 'Examiners', key: 'examiners', sortable: false, width: '200px', align: 'start' },
-  { title: 'Chairperson', key: 'chairperson', sortable: false, width: '180px', align: 'start' },
+  { title: 'Program', key: 'program', sortable: false, width: '200px', align: 'start' },
+  { title: 'Research Supervisor', key: 'main_supervisor', sortable: false, width: '250px', align: 'start' },
+  { title: 'Co-Supervisor', key: 'co_supervisor', sortable: false, width: '250px', align: 'start' },
+  { title: 'Status', key: 'nomination_status', sortable: false, width: '150px', align: 'center' },
+  { title: 'Examiners', key: 'examiners', sortable: false, width: '300px', align: 'start' },
+  { title: 'Chairperson', key: 'chairperson', sortable: false, width: '250px', align: 'start' },
 ];
 
 const getStatusColor = (status: string) => {
@@ -269,19 +269,32 @@ const processedNominations = computed<ProcessedNomination[]>(() => {
 <style scoped>
 .v-data-table :deep(.v-data-table__wrapper) {
   border: 1px solid #e0e0e0;
+  overflow-x: auto;
+  min-width: 2000px; /* Increased to accommodate wider columns */
 }
 
 .v-data-table :deep(table) {
   border-collapse: collapse;
+  table-layout: fixed !important;
+  width: 100% !important;
 }
 
 .v-data-table :deep(th) {
   border: 1px solid #e0e0e0 !important;
   background-color: #f5f5f5;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  vertical-align: top !important;
+  padding: 8px !important;
 }
 
 .v-data-table :deep(td) {
   border: 1px solid #e0e0e0 !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  vertical-align: top !important;
+  padding: 8px !important;
 }
 
 .cursor-pointer {

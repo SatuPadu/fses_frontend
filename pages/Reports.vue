@@ -109,8 +109,8 @@ const chairpersons = ref([]);
 const selectedChairperson = ref(null);
 const selectedChairpersonYear = ref(null);
 
-const examinerSummary = ref(null);
-const chairpersonSummary = ref(null);
+const examinerSummary = ref<Record<string, any> | undefined>(undefined);
+const chairpersonSummary = ref<number | undefined>(undefined);
 
 const examinerLoading = ref(false);
 const chairpersonLoading = ref(false);
@@ -143,7 +143,7 @@ async function fetchExaminers() {
     : [{ title: 'No examiners found', value: '', disabled: true }];
 }
 async function fetchExaminerSessions() {
-  if (!selectedExaminer.value) { examinerSummary.value = null; return; }
+  if (!selectedExaminer.value) { examinerSummary.value = undefined; return; }
   examinerLoading.value = true;
   try {
     const data = await reportsApi.getExaminerSessions(selectedExaminer.value, selectedExaminerYear.value);
@@ -162,7 +162,7 @@ async function fetchChairpersons() {
     : [{ title: 'No chairpersons found', value: '', disabled: true }];
 }
 async function fetchChairpersonSessions() {
-  if (!selectedChairperson.value) { chairpersonSummary.value = null; return; }
+  if (!selectedChairperson.value) { chairpersonSummary.value = undefined; return; }
   chairpersonLoading.value = true;
   try {
     const data = await reportsApi.getChairpersonSessions(selectedChairperson.value, selectedChairpersonYear.value);
@@ -209,7 +209,8 @@ async function fetchReports() {
       filters: {
         ...activeFilters.value,
         locked: true,
-      }
+      },
+      with_locked: true
     };
 
     const data = await nominationManagement.getNominations(options);

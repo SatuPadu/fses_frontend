@@ -90,7 +90,8 @@ const fetchNominations = async () => {
       per_page: pagination.itemsPerPage,
       sortBy: pagination.sortBy.length ? pagination.sortBy[0].key : 'student_name',
       sortOrder: pagination.sortBy.length ? pagination.sortBy[0].order : 'desc',
-      filters: filtersWithChairperson
+      filters: filtersWithChairperson,
+      with_locked: false
     });
 
     // Update the nominations and pagination

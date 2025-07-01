@@ -46,8 +46,7 @@
             v-for="co in item._coSupervisors"
             :key="co.label"
             class="text-caption"
-          >
-            <strong>{{ co.label }}:</strong> {{ co.name }}
+          > {{ co.name }}
           </div>
         </div>
         <div v-else class="text-caption text-muted">
@@ -204,13 +203,13 @@ const headers: Array<{
   width?: string;
   align?: 'start' | 'center' | 'end';
 }> = [
-  { title: 'No.', key: 'index', sortable: false, width: '60px', align: 'center' },
+  { title: 'No.', key: 'index', sortable: false, width: '80px', align: 'center' },
   { title: 'Student Information', key: 'student_name', sortable: false, width: '200px', align: 'start' },
-  { title: 'Program & Semester', key: 'program', sortable: false, width: '150px', align: 'start' },
-  { title: 'Research Supervisor', key: 'main_supervisor', sortable: false, width: '180px', align: 'start' },
-  { title: 'Co-Supervisor(s)', key: 'co_supervisor', sortable: false, width: '180px', align: 'start' },
-  { title: 'Nomination Status', key: 'nomination_status', sortable: false, width: '120px', align: 'start' },
-  { title: 'Assigned Examiners', key: 'examiners', sortable: false, width: '200px', align: 'start' },
+  { title: 'Program & Semester', key: 'program', sortable: false, width: '200px', align: 'start' },
+  { title: 'Research Supervisor', key: 'main_supervisor', sortable: false, width: '250px', align: 'start' },
+  { title: 'Co-Supervisor', key: 'co_supervisor', sortable: false, width: '250px', align: 'start' },
+  { title: 'Nomination Status', key: 'nomination_status', sortable: false, width: '150px', align: 'center' },
+  { title: 'Assigned Examiners', key: 'examiners', sortable: false, width: '300px', align: 'start' },
   { title: 'Assign Chairperson', key: 'chairperson', sortable: false, width: '250px', align: 'start' },
 ] as const;
 
@@ -591,19 +590,32 @@ const lecturerDisplay = (item: any) => `${item.title ? item.title + ' ' : ''}${i
 <style scoped>
 .v-data-table :deep(.v-data-table__wrapper) {
   border: 1px solid #e0e0e0;
+  overflow-x: auto;
+  min-width: 2000px; /* Increased to accommodate wider columns */
 }
 
 .v-data-table :deep(table) {
   border-collapse: collapse;
+  table-layout: fixed !important;
+  width: 100% !important;
 }
 
 .v-data-table :deep(th) {
   border: 1px solid #e0e0e0 !important;
   background-color: #f5f5f5;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  vertical-align: top !important;
+  padding: 8px !important;
 }
 
 .v-data-table :deep(td) {
   border: 1px solid #e0e0e0 !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  vertical-align: top !important;
+  padding: 8px !important;
 }
 
 .chairperson-select {

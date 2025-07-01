@@ -65,16 +65,17 @@ const headers = computed(() => {
     title: string;
     key: string;
     sortable: boolean;
+    width?: string;
     align?: 'start' | 'center' | 'end';
   }> = [
-    { title: 'No.', key: 'index', sortable: false, align: 'center' },
-    { title: 'Staff Number', key: 'staff_number', sortable: false, align: 'start' },
-    { title: 'Title', key: 'title', sortable: false, align: 'start' },
-    { title: 'Name', key: 'name', sortable: false, align: 'start' },
-    { title: 'Department', key: 'department', sortable: false, align: 'start' },
-    { title: 'External Institution', key: 'external_institution', sortable: false, align: 'start' },
-    { title: 'Email', key: 'email', sortable: false, align: 'start' },
-    { title: 'Phone', key: 'phone', sortable: false, align: 'start' },
+    { title: 'No.', key: 'index', sortable: false, align: 'center', width: '80px' },
+    { title: 'Staff Number', key: 'staff_number', sortable: false, align: 'start', width: '200px' },
+    { title: 'Title', key: 'title', sortable: false, align: 'start', width: '250px' },
+    { title: 'Name', key: 'name', sortable: false, align: 'start', width: '200px' },
+    { title: 'Department', key: 'department', sortable: false, align: 'start', width: '200px' },
+    { title: 'External Institution', key: 'external_institution', sortable: false, align: 'start', width: '200px' },
+    { title: 'Email', key: 'email', sortable: false, align: 'start', width: '200px' },
+    { title: 'Phone', key: 'phone', sortable: false, align: 'start', width: '200px' },
   ];
 
   // Only add Actions column if user has edit or delete permissions

@@ -99,7 +99,7 @@
                         <v-col cols="12" sm="6" v-if="student.co_supervisors && student.co_supervisors.length > 0">
                             <div class="info-field"  v-for="(coSupervisor, index) in student.co_supervisors"
                             :key="index">
-                                <label class="text-caption font-weight-medium text-medium-emphasis">Co-Supervisor {{ index + 1 }}</label>
+                                <label class="text-caption font-weight-medium text-medium-emphasis">Co-Supervisor</label>
                                 <div class="co-supervisors-container">
                                 {{ getCoSupervisorDisplayName(coSupervisor) }}
                                 </div>

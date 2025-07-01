@@ -115,21 +115,22 @@
   
   <script setup lang="ts">
   import { ref, watch, computed } from 'vue';
-  import { useTheme } from "vuetify";
+import type { PropType } from 'vue';
+import { useTheme } from "vuetify";
   
   const props = defineProps({
-    summary: { type: Number, default: null },
-    loading: { type: Boolean, default: false },
-    chairpersons: { type: Array, required: true },
-    academicYears: { type: Array, required: false, default: () => [] },
-    selectedChairperson: { type: String, default: null },
-    selectedYear: { type: String, default: null },
-  });
+  summary: { type: Number as PropType<number | undefined>, default: undefined },
+  loading: { type: Boolean, default: false },
+  chairpersons: { type: Array, required: true },
+  academicYears: { type: Array, required: false, default: () => [] },
+  selectedChairperson: { type: String as PropType<string | null>, default: null },
+  selectedYear: { type: String as PropType<string | null>, default: null },
+});
   
   const emits = defineEmits(['update:chairperson', 'update:year']);
   
-  const localChairperson = ref(props.selectedChairperson);
-  const localYear = ref(props.selectedYear);
+  const localChairperson = ref<string | null>(props.selectedChairperson || null);
+const localYear = ref<string | null>(props.selectedYear || null);
   
   // Theme setup for chart colors
   const theme = useTheme();
@@ -205,13 +206,13 @@
   }
   
   // Watch for prop changes
-  watch(() => props.selectedChairperson, (val) => { 
-    localChairperson.value = val; 
-  });
-  
-  watch(() => props.selectedYear, (val) => { 
-    localYear.value = val; 
-  });
+watch(() => props.selectedChairperson, (val) => { 
+  localChairperson.value = val || null; 
+});
+
+watch(() => props.selectedYear, (val) => { 
+  localYear.value = val || null; 
+});
   </script>
   
   <style scoped>

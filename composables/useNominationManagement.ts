@@ -32,7 +32,8 @@ export const useNominationManagement = () => {
     per_page: number, 
     sortBy: string, 
     sortOrder: string, 
-    filters: Record<string, any> 
+    filters: Record<string, any>,
+    with_locked?: boolean
   }) => {
     loading.value = true;
     error.value = null;
@@ -52,6 +53,11 @@ export const useNominationManagement = () => {
             queryParams[key] = String(value);
           }
         }
+      }
+
+      // Add with_locked to query params if provided
+      if (typeof options.with_locked !== 'undefined') {
+        queryParams['with_locked'] = String(options.with_locked);
       }
 
       const params = new URLSearchParams(queryParams);
