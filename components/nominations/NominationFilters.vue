@@ -61,7 +61,7 @@
 
         <!-- Semester Filter -->
         <v-col cols="12" md="6">
-          <v-select
+          <v-autocomplete
             v-model="filters.semester"
             :items="semesterItems"
             label="Semester"
@@ -69,7 +69,7 @@
             variant="outlined"
             clearable
             hide-details
-          ></v-select>
+          ></v-autocomplete>
         </v-col>
 
         <!-- Academic Year Filter -->
@@ -135,14 +135,10 @@ const filters = reactive({
   academic_year: null as string | null,
 });
 
-const semesterItems = [
-  { title: 'Semester 1', value: '1' },
-  { title: 'Semester 2', value: '2' },
-  { title: 'Semester 3', value: '3' },
-  { title: 'Semester 4', value: '4' },
-  { title: 'Semester 5', value: '5' },
-  { title: 'Semester 6', value: '6' },
-];
+const semesterItems = Array.from({ length: 16 }, (_, i) => ({
+  title: `Semester ${i + 1}`,
+  value: String(i + 1),
+}));
 
 // Academic years loaded from API
 const academicYearItems = ref<Array<{ title: string; value: string }>>([]);
