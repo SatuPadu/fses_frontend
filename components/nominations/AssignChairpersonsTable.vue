@@ -98,7 +98,7 @@
           :disabled="loadingSuggestions"
           hide-details
           class="chairperson-select"
-          @update:model-value="(value) => onManualChairpersonChange(item.id, value)"
+          @update:model-value="(value: any) => onManualChairpersonChange(item.id, value)"
         >
           <template #item="{ props: itemProps, item: selectItem }">
             <v-list-item v-bind="itemProps">
@@ -213,11 +213,11 @@ const headers: Array<{
   align?: 'start' | 'center' | 'end';
 }> = [
   { title: 'No.', key: 'index', sortable: false, width: '60px', align: 'center' },
-  { title: 'Student Information', key: 'student_name', sortable: true, width: '200px', align: 'start' },
-  { title: 'Program & Semester', key: 'program', sortable: true, width: '150px', align: 'start' },
-  { title: 'Research Supervisor', key: 'main_supervisor', sortable: true, width: '180px', align: 'start' },
-  { title: 'Co-Supervisor(s)', key: 'co_supervisor', sortable: true, width: '180px', align: 'start' },
-  { title: 'Nomination Status', key: 'nomination_status', sortable: true, width: '120px', align: 'start' },
+  { title: 'Student Information', key: 'student_name', sortable: false, width: '200px', align: 'start' },
+  { title: 'Program & Semester', key: 'program', sortable: false, width: '150px', align: 'start' },
+  { title: 'Research Supervisor', key: 'main_supervisor', sortable: false, width: '180px', align: 'start' },
+  { title: 'Co-Supervisor(s)', key: 'co_supervisor', sortable: false, width: '180px', align: 'start' },
+  { title: 'Nomination Status', key: 'nomination_status', sortable: false, width: '120px', align: 'start' },
   { title: 'Assigned Examiners', key: 'examiners', sortable: false, width: '200px', align: 'start' },
   { title: 'Assign Chairperson', key: 'chairperson', sortable: false, width: '250px', align: 'start' },
 ] as const;

@@ -72,10 +72,10 @@ const headers = computed(() => {
     align?: 'start' | 'center' | 'end';
   }> = [
     { title: 'No.', key: 'index', sortable: false, align: 'center' },
-    { title: 'Program Name', key: 'program_name', sortable: true, align: 'start' },
-    { title: 'Program Code', key: 'program_code', sortable: true, align: 'start' },
-    { title: 'Department', key: 'department', sortable: true, align: 'start' },
-    { title: 'Total Semesters', key: 'total_semesters', sortable: true, align: 'start' },
+    { title: 'Program Name', key: 'program_name', sortable: false, align: 'start' },
+    { title: 'Program Code', key: 'program_code', sortable: false, align: 'start' },
+    { title: 'Department', key: 'department', sortable: false, align: 'start' },
+    { title: 'Total Semesters', key: 'total_semesters', sortable: false, align: 'start' },
   ];
 
   // Only add Actions column if user has edit or delete permissions

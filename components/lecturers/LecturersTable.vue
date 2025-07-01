@@ -68,12 +68,12 @@ const headers = computed(() => {
     align?: 'start' | 'center' | 'end';
   }> = [
     { title: 'No.', key: 'index', sortable: false, align: 'center' },
-    { title: 'Staff Number', key: 'staff_number', sortable: true, align: 'start' },
-    { title: 'Title', key: 'title', sortable: true, align: 'start' },
-    { title: 'Name', key: 'name', sortable: true, align: 'start' },
-    { title: 'Department', key: 'department', sortable: true, align: 'start' },
-    { title: 'External Institution', key: 'external_institution', sortable: true, align: 'start' },
-    { title: 'Email', key: 'email', sortable: true, align: 'start' },
+    { title: 'Staff Number', key: 'staff_number', sortable: false, align: 'start' },
+    { title: 'Title', key: 'title', sortable: false, align: 'start' },
+    { title: 'Name', key: 'name', sortable: false, align: 'start' },
+    { title: 'Department', key: 'department', sortable: false, align: 'start' },
+    { title: 'External Institution', key: 'external_institution', sortable: false, align: 'start' },
+    { title: 'Email', key: 'email', sortable: false, align: 'start' },
     { title: 'Phone', key: 'phone', sortable: false, align: 'start' },
   ];
 

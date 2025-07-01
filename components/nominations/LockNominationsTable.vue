@@ -142,11 +142,11 @@ const headers: Array<{
     align?: 'start' | 'center' | 'end';
   }> = [
   { title: 'No.', key: 'index', sortable: false, width: '60px', align: 'center' },
-  { title: 'Student', key: 'student_name', sortable: true, width: '200px', align: 'start' },
-  { title: 'Program', key: 'program', sortable: true, width: '150px', align: 'start' },
-  { title: 'Research Supervisor', key: 'main_supervisor', sortable: true, width: '180px', align: 'start' },
-  { title: 'Co-Supervisor', key: 'co_supervisor', sortable: true, width: '180px', align: 'start' },
-  { title: 'Status', key: 'nomination_status', sortable: true, width: '120px', align: 'start' },
+  { title: 'Student', key: 'student_name', sortable: false, width: '200px', align: 'start' },
+  { title: 'Program', key: 'program', sortable: false, width: '150px', align: 'start' },
+  { title: 'Research Supervisor', key: 'main_supervisor', sortable: false, width: '180px', align: 'start' },
+  { title: 'Co-Supervisor', key: 'co_supervisor', sortable: false, width: '180px', align: 'start' },
+  { title: 'Status', key: 'nomination_status', sortable: false, width: '120px', align: 'start' },
   { title: 'Examiners', key: 'examiners', sortable: false, width: '200px', align: 'start' },
   { title: 'Chairperson', key: 'chairperson', sortable: false, width: '180px', align: 'start' },
 ];

@@ -106,22 +106,6 @@ export const useEnumsStore = defineStore('enums', () => {
     }));
   };
 
-  const getProgramOptions = () => {
-    if (!enumsData.value?.programs) return [];
-    return Object.entries(enumsData.value.programs).map(([value, title]) => ({
-      title,
-      value: parseInt(value)
-    }));
-  };
-
-  const getLecturerOptions = () => {
-    if (!enumsData.value?.lecturers) return [];
-    return Object.entries(enumsData.value.lecturers).map(([value, title]) => ({
-      title,
-      value: parseInt(value)
-    }));
-  };
-
   return {
     enumsData,
     loading,
@@ -133,7 +117,5 @@ export const useEnumsStore = defineStore('enums', () => {
     getMyRoleOptions,
     getNominationStatusOptions,
     getEvaluationTypeOptions,
-    getProgramOptions,
-    getLecturerOptions,
   };
 }); 

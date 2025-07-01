@@ -36,6 +36,14 @@ const sidebarItem: menu[] = [
     to: "/",
     external: false,
   },
+  {
+    title: "Reports & Statistics",
+    icon: AwardIcon,
+    to: "/reports",
+    external: false,
+    requiredPermission: "reports:view",
+    requiredRoles: ["ProgramCoordinator", "PGAM"],
+  },
   { header: "Management" },
   {
     title: "All Users",
@@ -67,6 +75,7 @@ const sidebarItem: menu[] = [
     external: false,
     requiredPermission: "students:view",
   },
+  { header: "Evaluation" },
   {
     title: "Examiner Nominations",
     icon: AwardIcon,

@@ -96,14 +96,14 @@ const headers = computed(() => {
     align?: 'start' | 'center' | 'end';
   }> = [
     { title: 'No.', key: 'index', sortable: false, align: 'center' },
-    { title: 'Staff Number', key: 'staff_number', sortable: true, align: 'start' },
-    { title: 'Title', key: 'lecturer.title', sortable: true, align: 'start' },
-    { title: 'Name', key: 'name', sortable: true, align: 'start' },
-    { title: 'Department', key: 'department', sortable: true, align: 'start' },
+    { title: 'Staff Number', key: 'staff_number', sortable: false, align: 'start' },
+    { title: 'Title', key: 'lecturer.title', sortable: false, align: 'start' },
+    { title: 'Name', key: 'name', sortable: false, align: 'start' },
+    { title: 'Department', key: 'department', sortable: false, align: 'start' },
     { title: 'Role', key: 'roles', sortable: false, align: 'start' },
-    { title: 'Email', key: 'email', sortable: true, align: 'start' },
-    { title: 'Phone', key: 'lecturer.phone', sortable: true, align: 'start' },
-    { title: 'Status', key: 'is_active', sortable: true, align: 'start' },
+    { title: 'Email', key: 'email', sortable: false, align: 'start' },
+    { title: 'Phone', key: 'lecturer.phone', sortable: false, align: 'start' },
+    { title: 'Status', key: 'is_active', sortable: false, align: 'start' },
     { title: 'Actions', key: 'actions', sortable: false, align: 'center' },
   ];
 

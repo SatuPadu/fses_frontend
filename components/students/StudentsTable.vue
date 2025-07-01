@@ -98,14 +98,14 @@ const headers = computed(() => {
     align?: 'start' | 'center' | 'end';
   }> = [
     { title: 'No.', key: 'index', sortable: false, align: 'center' },
-    { title: 'Matric Number', key: 'matric_number', sortable: true, align: 'start' },
-    { title: 'Name', key: 'name', sortable: true, align: 'start' },
-    { title: 'Email', key: 'email', sortable: true, align: 'start' },
-    { title: 'Program', key: 'program.program_name', sortable: true, align: 'start' },
-    { title: 'Current Semester', key: 'current_semester', sortable: true, align: 'start' },
-    { title: 'Department', key: 'program.department', sortable: true, align: 'start' },
-    { title: 'Research Supervisor', key: 'main_supervisor.name', sortable: true, align: 'start' },
-    ...(isOfficeAssistant.value ? [] : [{ title: 'My Role', key: 'user_roles', sortable: true }]),
+    { title: 'Matric Number', key: 'matric_number', sortable: false, align: 'start' },
+    { title: 'Name', key: 'name', sortable: false, align: 'start' },
+    { title: 'Email', key: 'email', sortable: false, align: 'start' },
+    { title: 'Program', key: 'program.program_name', sortable: false, align: 'start' },
+    { title: 'Current Semester', key: 'current_semester', sortable: false, align: 'start' },
+    { title: 'Department', key: 'program.department', sortable: false, align: 'start' },
+    { title: 'Research Supervisor', key: 'main_supervisor.name', sortable: false, align: 'start' },
+    ...(isOfficeAssistant.value ? [] : [{ title: 'My Role', key: 'user_roles', sortable: false }]),
     { title: 'Actions', key: 'actions', sortable: false, align: 'center' },
   ];
 

@@ -56,7 +56,7 @@ const useAuthStorage = () => {
   };
 };
 
-export const useAuthStore = defineStore('auth', () => {
+export const useAuthStore = defineStore('useAuth', () => {
   const authStorage = useAuthStorage();
   const initialState = authStorage.getStoredAuth();
 
@@ -246,7 +246,7 @@ export const useAuthStore = defineStore('auth', () => {
 
         // Update roles if included in response
         if (data.data.roles) {
-          roles.value = data.data.roles.map((role) => {
+          roles.value = data.data.roles.map((role: any) => {
             // Handle parsing permissions if they're a string
             if (typeof role.permissions === 'string' && role.permissions) {
               try {

@@ -107,7 +107,7 @@
                         </div>
                         <div v-else-if="formData.program_id && semesterOptions.length > 1" class="text-caption text-info mt-1">
                             <v-icon size="small" color="info" class="mr-1">mdi-information</v-icon>
-                            Semesters {{ semesterOptions.map(s => s.value).join(', ') }} are eligible for First Stage Evaluation for this program.
+                            Semesters {{ semesterOptions.map((s: any) => s.value).join(', ') }} are eligible for First Stage Evaluation for this program.
                         </div>
                         <div v-else-if="formData.program_id" class="text-caption text-grey mt-1">
                             <v-icon size="small" color="grey" class="mr-1">mdi-information</v-icon>

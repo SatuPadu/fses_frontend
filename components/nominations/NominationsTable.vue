@@ -121,6 +121,7 @@
 <script setup lang="ts">
 import { ref, toRefs, computed } from 'vue';
 import { usePermissions } from '~/composables/usePermissions';
+import { useEnumsStore } from '~/stores/enums';
 import type { Evaluation } from '~/types/global';
 
 const props = defineProps<{
@@ -146,6 +147,8 @@ const {
   canPostponeNominations 
 } = usePermissions();
 
+const enumsStore = useEnumsStore();
+
 const headers: Array<{
     title: string;
     key: string;
@@ -154,10 +157,10 @@ const headers: Array<{
     align?: 'start' | 'center' | 'end';
   }> = [
   { title: 'No.', key: 'index', sortable: false, width: '60px', align: 'center' },
-  { title: 'Student', key: 'student_name', sortable: true, width: '200px', align: 'start' },
-  { title: 'Program', key: 'program', sortable: true, width: '150px', align: 'start' },
-  { title: 'Co-Supervisor', key: 'co_supervisor', sortable: true, width: '180px', align: 'start' },
-  { title: 'Status', key: 'nomination_status', sortable: true, width: '120px', align: 'start' },
+  { title: 'Student', key: 'student_name', sortable: false, width: '200px', align: 'start' },
+  { title: 'Program', key: 'program', sortable: false, width: '150px', align: 'start' },
+  { title: 'Co-Supervisor', key: 'co_supervisor', sortable: false, width: '180px', align: 'start' },
+  { title: 'Status', key: 'nomination_status', sortable: false, width: '120px', align: 'start' },
   { title: 'Examiners', key: 'examiners', sortable: false, width: '200px', align: 'start' },
   { title: 'Chairperson', key: 'chairperson', sortable: false, width: '180px', align: 'start' },
   { title: 'Actions', key: 'actions', sortable: false, width: '120px', align: 'center' },
@@ -179,18 +182,9 @@ const getStatusColor = (status: string) => {
 };
 
 const getStatusText = (status: string) => {
-  switch (status) {
-    case 'Pending':
-      return 'Pending';
-    case 'Nominated':
-      return 'Nominated';
-    case 'Locked':
-      return 'Locked';
-    case 'Postponed':
-      return 'Postponed';
-    default:
-      return status;
-  }
+  const statusOptions = enumsStore.getNominationStatusOptions();
+  const statusOption = statusOptions.find(option => option.value === status);
+  return statusOption ? statusOption.title : status;
 };
 
 const handleOptionsUpdate = (options: any) => {

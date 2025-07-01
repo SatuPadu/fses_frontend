@@ -54,7 +54,7 @@
                     label="Research Title"
                     variant="outlined"
                     density="compact"
-                    :rules="[v => !!v || 'Research title is required']"
+                    :rules="[(v: any) => !!v || 'Research title is required']"
                     required
                     @blur="researchTitle = researchTitle?.trim()"
                   />
@@ -167,12 +167,24 @@
                     label="Academic Year"
                     variant="outlined"
                     density="compact"
-                    :rules="[v => !!v || 'Academic year is required']"
+                    :rules="[(v: any) => !!v || 'Academic year is required']"
                     :loading="loadingAcademicYears"
                     required
                     clearable
                     @update:model-value="handleAcademicYearChange"
                     @blur="academicYear = academicYear?.trim()"
+                  />
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-select
+                    v-model="evaluationType"
+                    :items="evaluationTypeOptions"
+                    label="Evaluation Type"
+                    variant="outlined"
+                    density="compact"
+                    :rules="[(v: string) => !!v || 'Evaluation type is required']"
+                    required
+                    clearable
                   />
                 </v-col>
               </v-row>
@@ -207,10 +219,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, toRaw, computed } from 'vue';
+import { ref, watch, toRaw, computed, onMounted } from 'vue';
 import { useNominationManagement } from '~/composables/useNominationManagement';
 import { useUserManagement } from '~/composables/useUserManagement';
 import { useToast } from '~/composables/useToast';
+import { useEnumsStore } from '~/stores/enums';
 import type { Evaluation, Lecturer, Examiner } from '~/types/global';
 import AddLecturerForm from '~/components/lecturers/AddLecturerForm.vue';
 
@@ -235,6 +248,7 @@ const selectedExaminer1 = ref<number | null>(null);
 const selectedExaminer2 = ref<number | null>(null);
 const selectedExaminer3 = ref<number | null>(null);
 const academicYear = ref<string>('');
+const evaluationType = ref('');
 
 // Available examiners
 const availableExaminers = ref<Lecturer[]>([]);
@@ -265,6 +279,15 @@ const currentExaminerSelections = ref<{
   examiner2?: number;
   examiner3?: number;
 }>({});
+
+const enumsStore = useEnumsStore();
+const evaluationTypeOptions = computed(() => enumsStore.getEvaluationTypeOptions());
+
+onMounted(async () => {
+  if (!enumsStore.enumsData) {
+    await enumsStore.fetchEnums();
+  }
+});
 
 // Handle academic year change - add new option if it doesn't exist
 const handleAcademicYearChange = (value: string) => {
@@ -476,6 +499,10 @@ const initializeFormData = () => {
     if (props.isEdit) {
       academicYear.value = rawData.academic_year || '';
     }
+
+    if (rawData.student && rawData.student.evaluation_type) {
+      evaluationType.value = rawData.student.evaluation_type;
+    }
   }
 };
 
@@ -527,6 +554,7 @@ const submitForm = async () => {
       examiner1_id: selectedExaminer1.value || undefined,
       examiner2_id: selectedExaminer2.value || undefined,
       examiner3_id: selectedExaminer3.value || undefined,
+      evaluation_type: evaluationType.value || '',
     };
 
     if (props.isEdit && props.nominationData) {
@@ -556,6 +584,7 @@ const closeDialog = () => {
   selectedExaminer2.value = null;
   selectedExaminer3.value = null;
   academicYear.value = '';
+  evaluationType.value = '';
   currentExaminerSelections.value = {};
   
   // Reset examiner lists

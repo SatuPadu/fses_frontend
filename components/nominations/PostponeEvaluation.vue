@@ -46,7 +46,7 @@
                     label="Reason for Postponement"
                     variant="outlined"
                     density="compact"
-                    :rules="[v => !!v || 'Reason is required']"
+                    :rules="[(v: any) => !!v || 'Reason is required']"
                     required
                     rows="3"
                   />
