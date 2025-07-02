@@ -101,6 +101,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import UiParentCard from '~/components/shared/UiParentCard.vue';
 import StudentFilters from '~/components/students/StudentFilters.vue';
 import StudentsTable from '~/components/students/StudentsTable.vue';
@@ -116,6 +117,8 @@ import { useToast } from '~/composables/useToast';
 import type { Student, Evaluation } from '~/types/global';
 import { PlusIcon, ExclamationCircleIcon } from 'vue-tabler-icons';
 
+const route = useRoute();
+const router = useRouter();
 const userManagement = useUserManagement();
 const { canViewStudents, canEditStudents, canDeleteStudents, canCreateNominations } = usePermissions();
 const toast = useToast();
@@ -319,6 +322,13 @@ onMounted(() => {
   // Wait a bit for permissions to initialize, then fetch students
   setTimeout(() => {
     fetchStudents();
+    
+    // Check if we should open the add student modal
+    if (route.query.action === 'add' && canViewStudents.value) {
+      showAddFormDialog.value = true;
+      // Clean up the query parameter
+      router.replace({ query: {} });
+    }
   }, 100);
 });
 </script>
