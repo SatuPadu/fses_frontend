@@ -36,20 +36,23 @@
                             ></v-text-field>
                         </v-col>
                         <v-col cols="12" sm="6">
-                            <v-label class="font-weight-bold mb-1">Role*</v-label>
-                            <v-select
-                                v-model="formData.role"
+                            <v-label class="font-weight-bold mb-1">Roles*</v-label>
+                            <v-autocomplete
+                                v-model="formData.roles"
                                 :items="roleItems"
                                 density="compact"
                                 variant="outlined"
-                                :error-messages="formErrors.role"
+                                :error-messages="formErrors.roles"
                                 :loading="enumsStore.loading"
                                 required
-                                @update:model-value="handleRoleChange"
-                            ></v-select>
+                                multiple
+                                chips
+                                closable-chips
+                                @update:model-value="handleRolesChange"
+                            ></v-autocomplete>
                         </v-col>
                          <v-col cols="12" sm="6">
-                            <v-label class="font-weight-bold mb-1">Title<span v-if="formData.role !== 'OfficeAssistant'">*</span></v-label>
+                            <v-label class="font-weight-bold mb-1">Title<span v-if="formData.roles.length !== 1 || !formData.roles.includes('OfficeAssistant')">*</span></v-label>
                             <v-select
                                 v-model="formData.title"
                                 :items="titleItems"
@@ -57,8 +60,8 @@
                                 variant="outlined"
                                 :error-messages="formErrors.title"
                                 :loading="enumsStore.loading"
-                                :required="formData.role !== 'OfficeAssistant'"
-                                :disabled="formData.role === 'OfficeAssistant'"
+                                :required="formData.roles.length == 1 && !formData.roles.includes('OfficeAssistant')"
+                                :disabled="formData.roles.length == 1 && formData.roles.includes('OfficeAssistant')"
                             ></v-select>
                         </v-col>
                         
@@ -72,7 +75,7 @@
                                 :error-messages="formErrors.department"
                                 :loading="enumsStore.loading"
                                 required
-                                :disabled="formData.role === 'OfficeAssistant'"
+                                :disabled="formData.roles.length == 1 && formData.roles.includes('OfficeAssistant')"
                             ></v-select>
                         </v-col>
                         <v-col cols="6">
@@ -165,7 +168,7 @@ const formData = ref({
     staff_number: '',
     name: '',
     title: null as string | null,
-    role: null as string | null,
+    roles: [] as string[],
     email: '',
     department: null as string | null,
     phone: '',
@@ -200,8 +203,8 @@ const validateForm = () => {
     }
     
     if (!formData.value.name) errors.name = 'Name is required';
-    if (formData.value.role !== 'OfficeAssistant' && !formData.value.title) errors.title = 'Title is required';
-    if (!formData.value.role) errors.role = 'Role is required';
+    if (!formData.value.roles.includes('OfficeAssistant') && !formData.value.title) errors.title = 'Title is required';
+    if (!formData.value.roles.length) errors.roles = 'Roles are required';
     if (!formData.value.department) errors.department = 'Department is required';
 
     // Email validation
@@ -259,7 +262,7 @@ const resetForm = () => {
         staff_number: '',
         name: '',
         title: null,
-        role: null,
+        roles: [],
         email: '',
         department: null,
         phone: '',
@@ -268,14 +271,10 @@ const resetForm = () => {
     formErrors.value = {};
 };
 
-const handleRoleChange = () => {
-    if (formData.value.role === 'OfficeAssistant') {
+const handleRolesChange = () => {
+    if (formData.value.roles.length == 1 && formData.value.roles.includes('OfficeAssistant')) {
         formData.value.department = 'Other';
         formData.value.title = null;
-    } else {
-        if (formData.value.department === 'Other') {
-            formData.value.department = null;
-        }   
     }
 };
 
