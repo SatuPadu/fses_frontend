@@ -243,8 +243,8 @@ const fetchNominations = async () => {
     // Add chairperson_assigned=false to filters to get nominations without chairpersons
     const filtersWithChairperson = {
       ...activeFilters.value,
-      chairperson_assigned: false,
-      department_specific: true
+      department_specific: true,
+      locked: false
     };
 
     const response = await nominationManagement.getNominations({

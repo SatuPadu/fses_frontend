@@ -91,7 +91,7 @@ const fetchNominations = async () => {
       sortBy: pagination.sortBy.length ? pagination.sortBy[0].key : 'student_name',
       sortOrder: pagination.sortBy.length ? pagination.sortBy[0].order : 'desc',
       filters: filtersWithChairperson,
-      with_locked: false
+      locked: false
     });
 
     // Update the nominations and pagination

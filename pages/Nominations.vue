@@ -110,7 +110,7 @@ const fetchNominations = async () => {
 
     const filtersWithChairperson = {
       ...activeFilters.value,
-      chairperson_assigned: false
+      locked: false
     };
     // Call the getNominations API with the correct parameters
     const response = await nominationManagement.getNominations({

@@ -210,7 +210,6 @@ async function fetchReports() {
         ...activeFilters.value,
         locked: true,
       },
-      with_locked: true
     };
 
     const data = await nominationManagement.getNominations(options);
