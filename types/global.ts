@@ -395,3 +395,37 @@ export interface PostponeResponse {
     postponed_to: string;
   };
 }
+
+// Chairperson assignment related interfaces
+export interface Assignment {
+  evaluation_id: number;
+  chairperson_id: number;
+  is_auto_assigned: boolean;
+}
+
+export interface ProcessedNomination extends Evaluation {
+  _coSupervisors: Array<{
+    label: string;
+    name: string;
+    isExternal: boolean;
+  }>;
+  _mainSupervisor: string;
+  _examiners: Array<{
+    key: string;
+    name: string;
+  }>;
+  _conflictingIds: number[];
+}
+
+export interface ChairpersonCandidate {
+  id: number;
+  name: string;
+  title?: string;
+  current_assignments?: number;
+  latest_academic_year_count?: number;
+}
+
+export interface SmartAssignmentResult {
+  chairperson: ChairpersonCandidate;
+  reason: string;
+}

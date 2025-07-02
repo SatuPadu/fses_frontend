@@ -87,8 +87,8 @@
     <template #item.chairperson="{ item }">
       <div class="chairperson-cell">
         <v-select
-          :model-value="assignmentMap[item.id]?.chairperson_id || null"
-          :items="chairpersonOptions"
+          :model-value="getSelectedChairpersonId(item)"
+          :items="getChairpersonOptionsForItem(item)"
           :item-title="lecturerDisplay"
           item-value="id"
           density="compact"
@@ -103,12 +103,12 @@
             <v-list-item v-bind="itemProps">
               <template #append>
                 <v-chip
-                  v-if="chairpersonStats[selectItem.raw.id]"
+                  v-if="getLatestAcademicYearCount(selectItem.raw.id)"
                   size="x-small"
                   color="primary"
                   variant="text"
                 >
-                  {{ chairpersonStats[selectItem.raw.id] }}/{{ MAX_ASSIGNMENTS }}
+                  {{ getLatestAcademicYearCount(selectItem.raw.id) }}/{{ MAX_ASSIGNMENTS }}
                 </v-chip>
               </template>
             </v-list-item>
@@ -129,44 +129,18 @@
 </template>
 
 <script setup lang="ts">
-import { toRefs, computed, ref, watch, onMounted, nextTick } from 'vue';
+import { toRefs, computed, ref, watch, onMounted } from 'vue';
 import { useNominationManagement } from '~/composables/useNominationManagement';
-import type { Evaluation } from '~/types/global';
+import type { 
+  Evaluation, 
+  Assignment, 
+  ProcessedNomination, 
+  ChairpersonCandidate, 
+  SmartAssignmentResult 
+} from '~/types/global';
 
 // Constants
 const MAX_ASSIGNMENTS = 4;
-
-// Types
-interface Assignment {
-  evaluation_id: number;
-  chairperson_id: number;
-  is_auto_assigned: boolean;
-}
-
-interface ProcessedNomination extends Evaluation {
-  _coSupervisors: Array<{
-    label: string;
-    name: string;
-    isExternal: boolean;
-  }>;
-  _mainSupervisor: string;
-  _examiners: Array<{
-    key: string;
-    name: string;
-  }>;
-}
-
-interface ChairpersonCandidate {
-  id: number;
-  name: string;
-  title?: string;
-  current_assignments?: number;
-}
-
-interface SmartAssignmentResult {
-  chairperson: ChairpersonCandidate;
-  reason: string;
-}
 
 // Props
 const props = defineProps<{
@@ -182,7 +156,7 @@ const { nominations, loading, totalItems, itemsPerPage, page, assignments } = to
 const emits = defineEmits<{
   'update-options': [options: any];
   'assignment-changed': [assignments: Assignment[]];
-  'smart-assign-all': [];
+  'validation-changed': [hasErrors: boolean, errors: string[]];
 }>();
 
 // Composables
@@ -230,36 +204,59 @@ const smartAssignAll = async (): Promise<Assignment[]> => {
   // Process each nomination individually
   for (const nomination of processedNominations.value) {
     const existingAssignment = assignmentMap.value[nomination.id];
+    const existingChairperson = nomination.chairperson;
     let shouldAutoAssign = false;
     
-    if (!existingAssignment) {
+    // If there's an existing chairperson from DB, preserve it unless it has conflicts
+    if (existingChairperson && !existingAssignment) {
+      const hasDBConflict = nomination._conflictingIds.includes(existingChairperson.id);
+      const requiresProfessor = needsProfessorChairperson(nomination);
+      const hasConstraintViolation = requiresProfessor && !isProfessor(existingChairperson);
+      
+      if (!hasDBConflict && !hasConstraintViolation) {
+        // Keep existing DB chairperson
+        const assignment: Assignment = {
+          evaluation_id: nomination.id,
+          chairperson_id: existingChairperson.id,
+          is_auto_assigned: nomination.is_auto_assigned || false,
+        };
+        newAssignments.push(assignment);
+        if (tempStats[existingChairperson.id] !== undefined) {
+          tempStats[existingChairperson.id]++;
+        }
+        continue;
+      } else {
+        // DB chairperson has conflicts, need to auto assign
+        shouldAutoAssign = true;
+      }
+    }
+    
+    if (!existingAssignment && !existingChairperson) {
       // No assignment exists - auto assign
       shouldAutoAssign = true;
-    } else if (existingAssignment.is_auto_assigned) {
-      // Already auto assigned - skip (keep existing)
-      newAssignments.push(existingAssignment);
-      // Update temp stats to account for this auto assignment
-      if (tempStats[existingAssignment.chairperson_id] !== undefined) {
-        tempStats[existingAssignment.chairperson_id]++;
-      }
-    } else {
-      // Manual assignment - check for errors
-      const examinerIds = getExaminerIds(nomination);
-      const requiresProfessor = needsProfessorChairperson(nomination);
-      const chairperson = chairpersonOptions.value.find(c => c.id === existingAssignment.chairperson_id);
-      
-      const hasConflict = examinerIds.includes(existingAssignment.chairperson_id);
-      const hasConstraintViolation = requiresProfessor && !isProfessor(chairperson);
-      
-      if (hasConflict || hasConstraintViolation) {
-        // Manual assignment has errors - auto assign
-        shouldAutoAssign = true;
-      } else {
-        // Manual assignment is valid - keep it
+    } else if (existingAssignment) {
+      if (existingAssignment.is_auto_assigned) {
+        // Already auto assigned - skip (keep existing)
         newAssignments.push(existingAssignment);
-        // Update temp stats to account for this manual assignment
         if (tempStats[existingAssignment.chairperson_id] !== undefined) {
           tempStats[existingAssignment.chairperson_id]++;
+        }
+      } else {
+        // Manual assignment - check for errors
+        const hasConflict = nomination._conflictingIds.includes(existingAssignment.chairperson_id);
+        const requiresProfessor = needsProfessorChairperson(nomination);
+        const chairperson = chairpersonOptions.value.find(c => c.id === existingAssignment.chairperson_id);
+        const hasConstraintViolation = requiresProfessor && !isProfessor(chairperson);
+        
+        if (hasConflict || hasConstraintViolation) {
+          // Manual assignment has errors - auto assign
+          shouldAutoAssign = true;
+        } else {
+          // Manual assignment is valid - keep it
+          newAssignments.push(existingAssignment);
+          if (tempStats[existingAssignment.chairperson_id] !== undefined) {
+            tempStats[existingAssignment.chairperson_id]++;
+          }
         }
       }
     }
@@ -275,8 +272,6 @@ const smartAssignAll = async (): Promise<Assignment[]> => {
         };
         
         newAssignments.push(assignment);
-        
-        // Update temp stats for next iteration
         tempStats[result.chairperson.id]++;
       }
     }
@@ -312,6 +307,16 @@ const chairpersonStats = computed(() => {
   assignments.value.forEach(assignment => {
     if (assignment.chairperson_id && stats[assignment.chairperson_id] !== undefined) {
       stats[assignment.chairperson_id]++;
+    }
+  });
+  
+  // Add existing chairpersons from nominations that aren't in assignments
+  nominations.value.forEach(nomination => {
+    if (nomination.chairperson && !assignmentMap.value[nomination.id]) {
+      const chairpersonId = nomination.chairperson.id;
+      if (stats[chairpersonId] !== undefined) {
+        stats[chairpersonId]++;
+      }
     }
   });
   
@@ -351,16 +356,121 @@ const processedNominations = computed<ProcessedNomination[]>(() => {
         name: `${examiner!.title ? examiner!.title + ' ' : ''}${examiner!.name}`.trim(),
       }));
 
+    // Calculate conflicting IDs for this nomination
+    const conflictingIds: number[] = [];
+    
+    // Add main supervisor
+    if (nomination.student?.main_supervisor?.id) {
+      conflictingIds.push(nomination.student.main_supervisor.id);
+    }
+    
+    // Add co-supervisors
+    nomination.student?.co_supervisors?.forEach(co => {
+      if (co.lecturer?.id) {
+        conflictingIds.push(co.lecturer.id);
+      }
+    });
+    
+    // Add examiners
+    [nomination.examiner1_id, nomination.examiner2_id, nomination.examiner3_id]
+      .filter(Boolean)
+      .forEach(id => {
+        if (id) {
+          conflictingIds.push(id);
+        }
+      });
+
     return {
       ...nomination,
       _mainSupervisor: mainSupervisor,
       _coSupervisors: coSupervisors,
       _examiners: examiners,
+      _conflictingIds: conflictingIds,
     };
   });
 });
 
+// Validation
+const validationErrors = computed(() => {
+  const errors: string[] = [];
+  
+  processedNominations.value.forEach(nomination => {
+    const selectedChairpersonId = getSelectedChairpersonId(nomination);
+    
+    if (selectedChairpersonId) {
+      // Check for conflicts (supervisor/co-supervisor/examiner)
+      if (nomination._conflictingIds.includes(selectedChairpersonId)) {
+        errors.push(`${nomination.student?.name}: Chairperson cannot be supervisor/co-supervisor/examiner`);
+      }
+      
+      // Check professor constraint
+      const requiresProfessor = needsProfessorChairperson(nomination);
+      const chairperson = chairpersonOptions.value.find(c => c.id === selectedChairpersonId) || nomination.chairperson;
+      if (requiresProfessor && !isProfessor(chairperson)) {
+        errors.push(`${nomination.student?.name}: Chairperson must be a Professor`);
+      }
+      
+      // Check assignment limit
+      const currentCount = chairpersonStats.value[selectedChairpersonId] || 0;
+      if (currentCount > MAX_ASSIGNMENTS) {
+        errors.push(`${nomination.student?.name}: Chairperson exceeds maximum assignments (${currentCount}/${MAX_ASSIGNMENTS})`);
+      }
+    }
+  });
+  
+  return errors;
+});
+
+// Watch validation errors and emit to parent
+watch(validationErrors, (errors) => {
+  emits('validation-changed', errors.length > 0, errors);
+}, { immediate: true });
+
 // Methods
+const getSelectedChairpersonId = (item: any): number | null => {
+  // Priority: assignment > existing chairperson
+  const assignment = assignmentMap.value[item.id];
+  if (assignment) {
+    return assignment.chairperson_id;
+  }
+  
+  if (item.chairperson?.id) {
+    return item.chairperson.id;
+  }
+  
+  return null;
+};
+
+const getChairpersonOptionsForItem = (item: any) => {
+  const selectedId = getSelectedChairpersonId(item);
+  
+  return chairpersonOptions.value.filter(chairperson => {
+    // Always include currently selected chairperson
+    if (selectedId && chairperson.id === selectedId) {
+      return true;
+    }
+    
+    // Check for conflicts (supervisor/co-supervisor/examiner)
+    if (item._conflictingIds.includes(chairperson.id)) {
+      return false;
+    }
+    
+    // Check professor constraint
+    const requiresProfessor = needsProfessorChairperson(item);
+    if (requiresProfessor && !isProfessor(chairperson)) {
+      return false;
+    }
+    
+    // Check assignment limit
+    const currentCount = chairpersonStats.value[chairperson.id] || 0;
+    if (currentCount >= MAX_ASSIGNMENTS) {
+      return false;
+    }
+    
+    return true;
+  });
+};
+
 const handleOptionsUpdate = (options: any) => {
   emits('update-options', options);
 };
@@ -411,70 +521,59 @@ const needsProfessorChairperson = (item: any): boolean => {
   return [item.examiner1, item.examiner2, item.examiner3].some(isProfessor);
 };
 
-const getExaminerIds = (item: any): number[] => {
-  return [item.examiner1_id, item.examiner2_id, item.examiner3_id].filter(Boolean);
-};
-
-const getValidChairpersonOptions = (item: any): ChairpersonCandidate[] => {
-  const examinerIds = getExaminerIds(item);
-  const requiresProfessor = needsProfessorChairperson(item);
-  
-  return chairpersonOptions.value.filter(chairperson => {
-    // Check if already an examiner (conflict)
-    if (examinerIds.includes(chairperson.id)) return false;
-    
-    // Check professor constraint
-    if (requiresProfessor && !isProfessor(chairperson)) return false;
-    
-    // Check assignment limit
-    const currentCount = chairpersonStats.value[chairperson.id] || 0;
-    if (currentCount >= MAX_ASSIGNMENTS) return false;
-    
-    return true;
-  });
-};
-
-const findBestChairperson = (item: any): SmartAssignmentResult | null => {
-  return findBestChairpersonWithStats(item, chairpersonStats.value);
-};
+// Replace the findBestChairpersonWithStats function in your component with this updated version:
 
 const findBestChairpersonWithStats = (item: any, stats: Record<number, number>): SmartAssignmentResult | null => {
-  const examinerIds = getExaminerIds(item);
   const requiresProfessor = needsProfessorChairperson(item);
   
   const validOptions = chairpersonOptions.value.filter(chairperson => {
-    // Check if already an examiner (conflict)
-    if (examinerIds.includes(chairperson.id)) return false;
+    // Check for conflicts (supervisor/co-supervisor/examiner)
+    if (item._conflictingIds.includes(chairperson.id)) {
+      return false;
+    }
     
     // Check professor constraint
-    if (requiresProfessor && !isProfessor(chairperson)) return false;
+    if (requiresProfessor && !isProfessor(chairperson)) {
+      return false;
+    }
     
     // Check assignment limit using provided stats
     const currentCount = stats[chairperson.id] || 0;
-    if (currentCount >= MAX_ASSIGNMENTS) return false;
+    if (currentCount >= MAX_ASSIGNMENTS) {
+      return false;
+    }
     
     return true;
   });
   
   if (validOptions.length === 0) return null;
   
-  // Sort by current assignment count (ascending) and then by name for consistency
-  const sortedOptions = validOptions.sort((a, b) => {
-    const countDiff = (stats[a.id] || 0) - (stats[b.id] || 0);
-    if (countDiff !== 0) return countDiff;
-    return a.name.localeCompare(b.name);
+  // Group chairpersons by their current assignment count
+  const groupsByCount: Record<number, ChairpersonCandidate[]> = {};
+  validOptions.forEach(chairperson => {
+    const count = stats[chairperson.id] || 0;
+    if (!groupsByCount[count]) {
+      groupsByCount[count] = [];
+    }
+    groupsByCount[count].push(chairperson);
   });
   
-  const bestChairperson = sortedOptions[0];
+  // Find the minimum assignment count
+  const minCount = Math.min(...Object.keys(groupsByCount).map(Number));
+  const candidatesWithMinCount = groupsByCount[minCount];
+  
+  // Randomly select from chairpersons with the minimum assignment count
+  const randomIndex = Math.floor(Math.random() * candidatesWithMinCount.length);
+  const bestChairperson = candidatesWithMinCount[randomIndex];
   const currentCount = stats[bestChairperson.id] || 0;
   
-  let reason = 'Best available option';
+  let reason = 'Randomly selected from best available options';
   if (currentCount === 0) {
-    reason = 'No current assignments';
+    reason = `Randomly selected (no current assignments, ${candidatesWithMinCount.length} candidates)`;
   } else if (currentCount < MAX_ASSIGNMENTS - 1) {
-    reason = `Balanced workload (${currentCount} assignments)`;
+    reason = `Randomly selected (${currentCount} assignments, ${candidatesWithMinCount.length} candidates)`;
   } else {
-    reason = `Last available slot (${currentCount} assignments)`;
+    reason = `Randomly selected (${currentCount} assignments, ${candidatesWithMinCount.length} candidates)`;
   }
   
   return {
@@ -483,25 +582,76 @@ const findBestChairpersonWithStats = (item: any, stats: Record<number, number>):
   };
 };
 
+// Optional: Add a seed-based random function for more predictable testing
+// You can replace Math.random() with this if you want reproducible results during testing
+const seededRandom = (() => {
+  let seed = Date.now() % 2147483647;
+  return () => {
+    seed = (seed * 16807) % 2147483647;
+    return (seed - 1) / 2147483646;
+  };
+})();
 
+// Alternative version with seeded randomization (uncomment if needed):
+/*
+const findBestChairpersonWithStatsSeeded = (item: any, stats: Record<number, number>): SmartAssignmentResult | null => {
+  const requiresProfessor = needsProfessorChairperson(item);
+  
+  const validOptions = chairpersonOptions.value.filter(chairperson => {
+    if (item._conflictingIds.includes(chairperson.id)) {
+      return false;
+    }
+    
+    if (requiresProfessor && !isProfessor(chairperson)) {
+      return false;
+    }
+    
+    const currentCount = stats[chairperson.id] || 0;
+    if (currentCount >= MAX_ASSIGNMENTS) {
+      return false;
+    }
+    
+    return true;
+  });
+  
+  if (validOptions.length === 0) return null;
+  
+  // Group by assignment count
+  const groupsByCount: Record<number, ChairpersonCandidate[]> = {};
+  validOptions.forEach(chairperson => {
+    const count = stats[chairperson.id] || 0;
+    if (!groupsByCount[count]) {
+      groupsByCount[count] = [];
+    }
+    groupsByCount[count].push(chairperson);
+  });
+  
+  const minCount = Math.min(...Object.keys(groupsByCount).map(Number));
+  const candidatesWithMinCount = groupsByCount[minCount];
+  
+  // Use seeded random for reproducible results
+  const randomIndex = Math.floor(seededRandom() * candidatesWithMinCount.length);
+  const bestChairperson = candidatesWithMinCount[randomIndex];
+  const currentCount = stats[bestChairperson.id] || 0;
+  
+  return {
+    chairperson: bestChairperson,
+    reason: `Seeded random selection (${currentCount} assignments, ${candidatesWithMinCount.length} candidates)`
+  };
+};
+*/
 
 // Status helpers
 const hasChairpersonConflict = (item: any): boolean => {
-  const chairpersonId = assignmentMap.value[item.id]?.chairperson_id;
-  return chairpersonId !== null && getExaminerIds(item).includes(chairpersonId);
+  const chairpersonId = getSelectedChairpersonId(item);
+  return chairpersonId !== null && item._conflictingIds.includes(chairpersonId);
 };
 
 const isChairpersonProfessor = (item: any): boolean => {
-  let chairperson = null;
-  const chairpersonId = assignmentMap.value[item.id]?.chairperson_id;
+  const chairpersonId = getSelectedChairpersonId(item);
+  if (!chairpersonId) return false;
   
-  if (chairpersonId) {
-    chairperson = chairpersonOptions.value.find(c => c.id === chairpersonId);
-  }
-  if (!chairperson && item.chairperson) {
-    chairperson = item.chairperson;
-  }
-  
+  const chairperson = chairpersonOptions.value.find(c => c.id === chairpersonId) || item.chairperson;
   return isProfessor(chairperson);
 };
 
@@ -510,10 +660,10 @@ const hasChairpersonProfessorConstraintViolation = (item: any): boolean => {
 };
 
 const getAssignmentStatus = (item: any) => {
+  const selectedChairpersonId = getSelectedChairpersonId(item);
   const assignment = assignmentMap.value[item.id];
-  const hasAssignment = assignment || item.chairperson;
   
-  if (!hasAssignment) {
+  if (!selectedChairpersonId) {
     return { show: false, class: '', icon: '', text: '' };
   }
   
@@ -525,7 +675,7 @@ const getAssignmentStatus = (item: any) => {
       show: true,
       class: 'text-error',
       icon: 'mdi-alert-circle',
-      text: 'Conflict: Chairperson is also an examiner'
+      text: 'Conflict: Cannot be supervisor/examiner'
     };
   }
   
@@ -534,7 +684,19 @@ const getAssignmentStatus = (item: any) => {
       show: true,
       class: 'text-warning',
       icon: 'mdi-alert',
-      text: 'Constraint: Chairperson must be a Professor'
+      text: 'Constraint: Must be a Professor'
+    };
+  }
+  
+  // Check assignment limit
+  const currentCount = chairpersonStats.value[selectedChairpersonId] || 0;
+  const latestAcademicYearCount = getLatestAcademicYearCount(selectedChairpersonId);
+  if (currentCount > MAX_ASSIGNMENTS) {
+    return {
+      show: true,
+      class: 'text-error',
+      icon: 'mdi-alert-circle',
+      text: `Exceeds limit (${latestAcademicYearCount}/${MAX_ASSIGNMENTS})`
     };
   }
   
@@ -547,11 +709,30 @@ const getAssignmentStatus = (item: any) => {
     };
   }
   
+  if (assignment && !assignment.is_auto_assigned) {
+    return {
+      show: true,
+      class: 'text-success',
+      icon: 'mdi-account-check',
+      text: 'Manually assigned'
+    };
+  }
+  
+  // Existing chairperson from DB
+  if (item.chairperson) {
+    return {
+      show: true,
+      class: item.chairperson.is_auto_assigned ? 'text-primary' : 'text-success',
+      icon: item.chairperson.is_auto_assigned ? 'mdi-auto-fix' : 'mdi-account-check',
+      text: item.chairperson.is_auto_assigned ? 'Auto assigned (DB)' : 'Manually assigned (DB)'
+    };
+  }
+  
   return {
-    show: true,
-    class: 'text-success',
-    icon: 'mdi-account-check',
-    text: 'Manually assigned'
+    show: false,
+    class: '',
+    icon: '',
+    text: ''
   };
 };
 
@@ -585,6 +766,18 @@ onMounted(async () => {
 });
 
 const lecturerDisplay = (item: any) => `${item.title ? item.title + ' ' : ''}${item.name}`.trim();
+
+// Helper method to get max assignments for a chairperson
+const getMaxAssignmentsForChairperson = (chairpersonId: number): number => {
+  const chairperson = chairpersonOptions.value.find(c => c.id === chairpersonId);
+  return chairperson?.latest_academic_year_count || 4; // Fallback to 4 if not available
+};
+
+// Helper method to get latest academic year count for a chairperson
+const getLatestAcademicYearCount = (chairpersonId: number): number => {
+  const chairperson = chairpersonOptions.value.find(c => c.id === chairpersonId);
+  return chairperson?.latest_academic_year_count || 0;
+};
 </script>
 
 <style scoped>

@@ -38,7 +38,7 @@
       <span v-else>-</span>
     </template>
     <template #item.examiner_1="{ item }: { item: any }">
-      {{ ( item.examiner1?.title ? item.examiner1?.title + ' ' : '') + item.examiner1?.name || '-' }}
+      {{ ( item.examiner1 && item.examiner1?.title ? item.examiner1?.title + ' ' : '') + item.examiner1?.name || '-' }}
     </template>
     <template #item.examiner_2="{ item }: { item: any }">
       {{ ( item.examiner2?.title ? item.examiner2?.title + ' ' : '') + item.examiner2?.name || '-' }}

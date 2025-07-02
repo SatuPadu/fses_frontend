@@ -3,10 +3,6 @@
     <v-row>
       <v-col cols="12" md="12">
         <h1>Examiner Nominations</h1>
-        <!-- Action Buttons (if any) -->
-        <!-- <div class="d-flex justify-end mb-4 mt-4 gap-2">
-          <PermissionButton ...>Add Nomination</PermissionButton>
-        </div> -->
         <!-- Filters -->
         <div class="mb-4 mt-4">
           <NominationFilters @filters-updated="handleFiltersUpdated" :from-nominations="true" />
@@ -110,7 +106,8 @@ const fetchNominations = async () => {
 
     const filtersWithChairperson = {
       ...activeFilters.value,
-      locked: false
+      locked: false,
+      is_postponed: false,
     };
     // Call the getNominations API with the correct parameters
     const response = await nominationManagement.getNominations({

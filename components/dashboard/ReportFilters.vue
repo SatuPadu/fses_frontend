@@ -2,7 +2,7 @@
   <v-card class="mb-6 elevation-2">
     <v-card-text>
       <v-row>
-        <v-col cols="12" md="4" v-if="!isProgramCoordinator">
+        <v-col :cols="12" :md="isProgramCoordinator ? 4 : 3" v-if="!isProgramCoordinator">
           <v-select
             label="Department"
             :items="departmentOptions"
@@ -14,7 +14,7 @@
             :loading="loading"
           />
         </v-col>
-        <v-col cols="12" md="4">
+        <v-col :cols="12" :md="isProgramCoordinator ? 4 : 3">
           <v-select
             label="Program"
             :items="programOptions"
@@ -27,7 +27,7 @@
             :disabled="!filters.department"
           />
         </v-col>
-        <v-col cols="12" md="4">
+        <v-col :cols="12" :md="isProgramCoordinator ? 4 : 3">
           <v-select
             label="Evaluation Type"
             :items="evaluationTypeOptions"
@@ -37,6 +37,15 @@
             clearable
             hide-details
             :loading="loading"
+          />
+        </v-col>
+        <v-col :cols="12" :md="isProgramCoordinator ? 4 : 3">
+          <v-checkbox
+            v-model="filters.is_postponed"
+            label="Postponed"
+            density="compact"
+            hide-details
+            class="ml-4"
           />
         </v-col>
       </v-row>
@@ -56,10 +65,11 @@ const userManagement = useUserManagement();
 const permissions = usePermissions();
 const auth = useAuth();
 
-const filters = ref<{ department: string | null, program_id: string | null, evaluation_type: string | null }>({
+const filters = ref<{ department: string | null, program_id: string | null, evaluation_type: string | null, is_postponed: boolean }>({
   department: null,
   program_id: null,
   evaluation_type: null,
+  is_postponed: false,
 });
 
 const loading = ref(false);

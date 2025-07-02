@@ -35,6 +35,7 @@
             :assignments="assignments"
             @update-options="handleOptionsUpdate"
             @assignment-changed="handleAssignmentChanged"
+            @validation-changed="handleValidationChanged"
           />
         </UiParentCard>
         
@@ -64,15 +65,19 @@
         <!-- Validation Error Display -->
         <div v-if="hasValidationErrors && assignments.length > 0" class="mt-4">
           <v-alert
-            type="warning"
+            type="error"
             variant="tonal"
-            :title="validationErrorTitle"
-            :text="validationErrorMessage"
+            title="Validation Errors"
             class="mb-4"
           >
             <template #prepend>
               <v-icon icon="mdi-alert-circle" />
             </template>
+            <div class="mt-2">
+              <div v-for="error in validationErrors" :key="error" class="text-caption mb-1">
+                • {{ error }}
+              </div>
+            </div>
           </v-alert>
         </div>
       </v-col>
@@ -86,7 +91,7 @@
           Confirm Save
         </v-card-title>
         <v-card-text>
-          Are you sure you want to save the chairperson assignments? This action cannot be undone.
+          Are you sure you want to save {{ assignments.length }} chairperson assignment(s)? This action cannot be undone.
         </v-card-text>
         <v-card-actions class="justify-start">
           <v-btn
@@ -139,6 +144,10 @@ const assignments = ref<Array<{
   is_auto_assigned: boolean;
 }>>([]);
 
+// Validation state
+const hasValidationErrors = ref(false);
+const validationErrors = ref<string[]>([]);
+
 // Pagination and sorting state
 const pagination = reactive({
   page: 1,
@@ -147,92 +156,7 @@ const pagination = reactive({
   sortBy: [{ key: 'student_name', order: 'desc' as 'asc' | 'desc' }],
 });
 
-// Validation state
-const hasValidationErrors = ref(false);
-const validationErrorTitle = ref('');
-const validationErrorMessage = ref('');
-
-// Validation computed properties
-const validationErrors = computed(() => {
-  const errors: string[] = [];
-  
-  if (assignments.value.length === 0) {
-    return errors;
-  }
-  
-  // Check for duplicate evaluation assignments
-  const evaluationIds = assignments.value.map(a => a.evaluation_id);
-  const duplicateEvaluations = evaluationIds.filter((id, index) => evaluationIds.indexOf(id) !== index);
-  if (duplicateEvaluations.length > 0) {
-    errors.push(`Duplicate assignments found for ${duplicateEvaluations.length} evaluation(s)`);
-  }
-  
-  // Check for invalid chairperson IDs
-  const invalidChairpersons = assignments.value.filter(a => !a.chairperson_id || a.chairperson_id <= 0);
-  if (invalidChairpersons.length > 0) {
-    errors.push(`${invalidChairpersons.length} assignment(s) have invalid chairperson IDs`);
-  }
-  
-  // Check for invalid evaluation IDs
-  const validEvaluationIds = nominations.value.map(n => n.id);
-  const invalidEvaluations = assignments.value.filter(a => !validEvaluationIds.includes(a.evaluation_id));
-  if (invalidEvaluations.length > 0) {
-    errors.push(`${invalidEvaluations.length} assignment(s) have invalid evaluation IDs`);
-  }
-  
-  // Check for assignments to evaluations that already have chairpersons
-  const nominationsWithChairpersons = nominations.value.filter(n => n.chairperson);
-  const conflictingAssignments = assignments.value.filter(a => 
-    nominationsWithChairpersons.some(n => n.id === a.evaluation_id)
-  );
-  if (conflictingAssignments.length > 0) {
-    errors.push(`${conflictingAssignments.length} evaluation(s) already have chairpersons assigned`);
-  }
-  
-  // Check for professor constraints (professors can only be assigned to specific programs)
-  const professorConstraints = assignments.value.filter(a => {
-    const nomination = nominations.value.find(n => n.id === a.evaluation_id);
-    const chairperson = nominations.value.find(n => n.chairperson?.id === a.chairperson_id)?.chairperson;
-    
-    if (nomination && chairperson) {
-      // Check if chairperson is a professor and has department constraints
-      const chairpersonTitle = chairperson.title?.toLowerCase() || '';
-      const isProfessor = chairpersonTitle === 'professor';
-      
-      if (isProfessor) {
-        // Professors can only be assigned to their own department
-        const chairpersonDept = chairperson.department;
-        const studentDept = nomination.student?.department;
-        
-        if (chairpersonDept && studentDept && chairpersonDept !== studentDept) {
-          return true; // This is a constraint violation
-        }
-      }
-    }
-    return false;
-  });
-  
-  if (professorConstraints.length > 0) {
-    errors.push(`${professorConstraints.length} professor assignment(s) violate department constraints`);
-  }
-  
-  return errors;
-});
-
-// Watch for validation errors
-watch(validationErrors, (errors) => {
-  hasValidationErrors.value = errors.length > 0;
-  
-  if (errors.length > 0) {
-    validationErrorTitle.value = 'Validation Errors Detected';
-    validationErrorMessage.value = errors.join('. ');
-  } else {
-    validationErrorTitle.value = '';
-    validationErrorMessage.value = '';
-  }
-}, { immediate: true });
-
-// Fetch nominations from API with chairperson_assigned=false (not yet assigned)
+// Fetch nominations from API - now includes both assigned and unassigned
 const fetchNominations = async () => {
   if (!canAssignChairpersons.value) {
     return;
@@ -240,11 +164,11 @@ const fetchNominations = async () => {
 
   loading.value = true;
   try {
-    // Add chairperson_assigned=false to filters to get nominations without chairpersons
     const filtersWithChairperson = {
       ...activeFilters.value,
       department_specific: true,
-      locked: false
+      locked: false,
+      is_postponed: false,
     };
 
     const response = await nominationManagement.getNominations({
@@ -255,12 +179,34 @@ const fetchNominations = async () => {
       filters: filtersWithChairperson
     });
 
-    // Update the nominations and pagination with proper error handling
     const responseData = response?.data;
     if (responseData) {
       nominations.value = (responseData.items || [])
         .filter((item: any) => item && typeof item.id === 'number' && typeof item.student_id === 'number') as Evaluation[];
       pagination.totalItems = responseData.pagination?.total || 0;
+      
+      // Initialize assignments with existing chairpersons from DB
+      const existingAssignments: Array<{
+        evaluation_id: number;
+        chairperson_id: number;
+        is_auto_assigned: boolean;
+      }> = [];
+      
+      nominations.value.forEach(nomination => {
+        if (nomination.chairperson && !assignments.value.find(a => a.evaluation_id === nomination.id)) {
+          existingAssignments.push({
+            evaluation_id: nomination.id,
+            chairperson_id: nomination.chairperson.id,
+            is_auto_assigned: nomination.is_auto_assigned || false,
+          });
+        }
+      });
+      
+      // Merge with current assignments (current assignments take priority)
+      const currentAssignmentIds = assignments.value.map(a => a.evaluation_id);
+      const newAssignments = existingAssignments.filter(a => !currentAssignmentIds.includes(a.evaluation_id));
+      assignments.value = [...assignments.value, ...newAssignments];
+      
     } else {
       nominations.value = [];
       pagination.totalItems = 0;
@@ -290,19 +236,15 @@ const smartAutoAssignChairpersons = async () => {
 
   autoAssigning.value = true;
   try {
-    // Count existing assignments before auto-assignment
-    const existingAssignments = assignments.value.length;
     const existingManualAssignments = assignments.value.filter(a => !a.is_auto_assigned).length;
     const existingAutoAssignments = assignments.value.filter(a => a.is_auto_assigned).length;
     
-    // Use the child component's smart assignment function
     const newAssignments = await chairpersonTableRef.value.smartAssignAll();
     
     const totalAssigned = newAssignments.length;
     const newManualAssignments = Array.isArray(newAssignments) ? newAssignments.filter(a => !a.is_auto_assigned).length : 0;
     const newAutoAssignments = Array.isArray(newAssignments) ? newAssignments.filter(a => a.is_auto_assigned).length : 0;
     
-    // Calculate changes
     const preservedManual = newManualAssignments;
     const replacedConflicted = existingManualAssignments - preservedManual;
     const newlyAutoAssigned = newAutoAssignments - existingAutoAssignments;
@@ -346,13 +288,11 @@ const saveAssignments = () => {
     return;
   }
   
-  // Check for validation errors first
   if (hasValidationErrors.value) {
     toast.error('Validation Errors', 'Please fix the validation errors before saving');
     return;
   }
   
-  // Validate assignments before showing dialog
   const validAssignments = assignments.value.filter(assignment => 
     assignment && 
     typeof assignment.evaluation_id === 'number' && 
@@ -376,8 +316,20 @@ const confirmSave = async () => {
 
   saving.value = true;
   try {
-    const response = await nominationManagement.saveChairpersonAssignments(assignments.value);
-    toast.handleApiSuccess(response, 'Chairperson assignments saved successfully');
+    // Only save assignments that are different from existing chairpersons
+    const assignmentsToSave = assignments.value.filter(assignment => {
+      const nomination = nominations.value.find(n => n.id === assignment.evaluation_id);
+      return !nomination?.chairperson || nomination.chairperson.id !== assignment.chairperson_id;
+    });
+    
+    if (assignmentsToSave.length === 0) {
+      toast.info('No Changes', 'No new assignments to save');
+      showSaveDialog.value = false;
+      return;
+    }
+    
+    const response = await nominationManagement.saveChairpersonAssignments(assignmentsToSave);
+    toast.handleApiSuccess(response, `${assignmentsToSave.length} chairperson assignment(s) saved successfully`);
     showSaveDialog.value = false;
     assignments.value = []; // Clear assignments after successful save
     await fetchNominations(); // Refresh the list
@@ -403,8 +355,8 @@ const clearAssignments = () => {
 // Event Handlers
 const handleFiltersUpdated = (filters: Record<string, any>) => {
   activeFilters.value = filters || {};
-  pagination.page = 1; // Reset to first page
-  assignments.value = []; // Clear assignments when filters change
+  pagination.page = 1;
+  assignments.value = [];
   fetchNominations();
 };
 
@@ -427,6 +379,11 @@ const handleAssignmentChanged = (newAssignments: Array<{
   assignments.value = Array.isArray(newAssignments) ? newAssignments : [];
 };
 
+const handleValidationChanged = (hasErrors: boolean, errors: string[]) => {
+  hasValidationErrors.value = hasErrors;
+  validationErrors.value = errors;
+};
+
 // Watch for permission changes
 watch(canAssignChairpersons, (newVal) => {
   if (newVal) {
@@ -435,7 +392,6 @@ watch(canAssignChairpersons, (newVal) => {
 }, { immediate: false });
 
 onMounted(() => {
-  // Wait a bit for permissions to initialize, then fetch nominations
   setTimeout(() => {
     if (canAssignChairpersons.value) {
       fetchNominations();
@@ -443,3 +399,17 @@ onMounted(() => {
   }, 100);
 });
 </script>
+
+<style scoped>
+.text-error {
+  color: rgb(var(--v-theme-error)) !important;
+}
+
+.text-success {
+  color: rgb(var(--v-theme-success)) !important;
+}
+
+.text-muted {
+  color: rgba(var(--v-theme-on-surface), 0.6) !important;
+}
+</style>

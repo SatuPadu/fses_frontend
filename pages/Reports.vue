@@ -82,7 +82,9 @@ const toast = useToast();
 // State
 const reports = ref([]);
 const loading = ref(false);
-const activeFilters = ref({});
+const activeFilters = ref({
+  is_postponed: false,
+});
 
 // Pagination and sorting state
 const pagination = reactive({
@@ -208,7 +210,7 @@ async function fetchReports() {
       sortOrder: pagination.sortBy[0]?.order || 'desc',
       filters: {
         ...activeFilters.value,
-        locked: true,
+        locked: activeFilters.value?.is_postponed ? false : true,
       },
     };
 

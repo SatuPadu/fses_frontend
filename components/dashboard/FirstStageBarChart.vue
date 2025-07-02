@@ -143,6 +143,8 @@ const chartOptions = computed(() => ({
   yaxis: {
     title: { text: 'Evaluations' },
     min: 0,
+    max: 4,
+    tickAmount: 2,
     labels: { style: { fontSize: '14px' } }
   },
   legend: {

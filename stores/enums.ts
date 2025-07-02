@@ -34,10 +34,6 @@ export const useEnumsStore = defineStore('enums', () => {
 
       const data: EnumsResponse = await response.json();
 
-      if (data.error) {
-        throw new Error(data.error || 'Failed to fetch enums');
-      }
-
       if (data.success) {
         enumsData.value = data.data;
         return data.data;
@@ -92,10 +88,12 @@ export const useEnumsStore = defineStore('enums', () => {
 
   const getNominationStatusOptions = () => {
     if (!enumsData.value?.nominationStatus) return [];
-    return Object.entries(enumsData.value.nominationStatus).map(([value, title]) => ({
-      title,
-      value
-    }));
+    return Object.entries(enumsData.value.nominationStatus)
+      .filter(([value, title]) => !['locked', 'postponed'].includes(value.toLowerCase()))
+      .map(([value, title]) => ({
+        title,
+        value
+      }));
   };
 
   const getEvaluationTypeOptions = () => {
