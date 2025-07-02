@@ -16,7 +16,7 @@
                             variant="outlined"
                             :readonly="!isStaffNumberEditable"
                             :disabled="!isStaffNumberEditable"
-                            :error-messages="formErrors.staff_number"
+                            :error-messages="formErrors.staff_number || (formData.staff_number && (formData.staff_number.length < 8 || !/^[a-zA-Z0-9]+$/.test(formData.staff_number)) ? 'Staff number format is invalid (should be at least 8 alphanumeric characters)' : '')"
                         ></v-text-field>
                     </v-col>
                     <v-col cols="12" sm="6">
@@ -184,6 +184,14 @@ const toggleDialog = () => {
 const validateForm = () => {
     const errors: Record<string, string> = {};
 
+    if (!formData.value.staff_number) {
+        errors.staff_number = 'Staff number is required';
+    } else if (formData.value.staff_number.length < 8) {
+        errors.staff_number = 'Staff number must be at least 8 characters';
+    } else if (!/^[a-zA-Z0-9]+$/.test(formData.value.staff_number)) {
+        errors.staff_number = 'Staff number must be alphanumeric (letters and numbers only)';
+    }
+    
     if (!formData.value.name) errors.name = 'Name is required';
     if (!formData.value.title) errors.title = 'Title is required';
     if (!formData.value.department) errors.department = 'Department is required';
@@ -240,6 +248,12 @@ const resetForm = () => {
 
 watch(() => props.lecturerInfo, (newLecturerInfo) => {
     if (newLecturerInfo) {
+        // Validate staff number format
+        const staffNum = newLecturerInfo.staff_number;
+        if (staffNum && (staffNum.length < 8 || !/^[a-zA-Z0-9]+$/.test(staffNum))) {
+            console.warn('Staff number does not meet format requirements:', staffNum);
+        }
+        
         originalStaffNumber.value = newLecturerInfo.staff_number || '';
         formData.value = {
             staff_number: newLecturerInfo.staff_number || '',

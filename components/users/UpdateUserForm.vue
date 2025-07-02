@@ -20,6 +20,7 @@
                                 variant="outlined"
                                 readonly
                                 disabled
+                                :error-messages="staffNumber && (staffNumber.length < 8 || !/^[a-zA-Z0-9]+$/.test(staffNumber)) ? 'Staff number format is invalid (should be at least 8 alphanumeric characters)' : ''"
                             ></v-text-field>
                         </v-col>
                         <v-col cols="12" sm="6">
@@ -284,6 +285,12 @@ const validateEmailOnBlur = () => {
 
 watch(() => props.userInfo, (newUserInfo) => {
     if (newUserInfo) {
+        // Validate staff number format
+        const staffNum = newUserInfo.staff_number;
+        if (staffNum && (staffNum.length < 8 || !/^[a-zA-Z0-9]+$/.test(staffNum))) {
+            console.warn('Staff number does not meet format requirements:', staffNum);
+        }
+        
         // Convert roles array to string array
         const roleValues: string[] = [];
         if (newUserInfo.roles && Array.isArray(newUserInfo.roles)) {

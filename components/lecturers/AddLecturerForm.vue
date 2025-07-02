@@ -15,7 +15,8 @@
                             density="compact"
                             variant="outlined"
                             :error-messages="formErrors.staff_number"
-                            @blur="formData.staff_number = formData.staff_number?.trim()"
+                            placeholder="Enter at least 8 alphanumeric characters"
+                            @blur="validateStaffNumberOnBlur"
                         ></v-text-field>
                     </v-col>
                     <v-col cols="12" sm="6">
@@ -181,6 +182,14 @@ const toggleDialog = () => {
 const validateForm = () => {
     const errors: Record<string, string> = {};
 
+    if (!formData.value.staff_number) {
+        errors.staff_number = 'Staff number is required';
+    } else if (formData.value.staff_number.length < 8) {
+        errors.staff_number = 'Staff number must be at least 8 characters';
+    } else if (!/^[a-zA-Z0-9]+$/.test(formData.value.staff_number)) {
+        errors.staff_number = 'Staff number must be alphanumeric (letters and numbers only)';
+    }
+    
     if (!formData.value.name) errors.name = 'Name is required';
     if (!formData.value.title) errors.title = 'Title is required';
     if (!formData.value.department) errors.department = 'Department is required';
@@ -232,6 +241,23 @@ const resetForm = () => {
         specialization: '',
     };
     formErrors.value = {};
+};
+
+const validateStaffNumberOnBlur = () => {
+    formData.value.staff_number = formData.value.staff_number?.trim();
+    
+    if (!formData.value.staff_number) {
+        formErrors.value.staff_number = 'Staff number is required';
+    } else if (formData.value.staff_number.length < 8) {
+        formErrors.value.staff_number = 'Staff number must be at least 8 characters';
+    } else if (!/^[a-zA-Z0-9]+$/.test(formData.value.staff_number)) {
+        formErrors.value.staff_number = 'Staff number must be alphanumeric (letters and numbers only)';
+    } else {
+        // Clear staff number error if validation passes
+        if (formErrors.value.staff_number) {
+            delete formErrors.value.staff_number;
+        }
+    }
 };
 
 watch(() => props.dialog, (newVal) => {
