@@ -197,7 +197,7 @@ const validationErrors = computed(() => {
     if (nomination && chairperson) {
       // Check if chairperson is a professor and has department constraints
       const chairpersonTitle = chairperson.title?.toLowerCase() || '';
-      const isProfessor = chairpersonTitle.includes('professor');
+      const isProfessor = chairpersonTitle === 'professor';
       
       if (isProfessor) {
         // Professors can only be assigned to their own department
