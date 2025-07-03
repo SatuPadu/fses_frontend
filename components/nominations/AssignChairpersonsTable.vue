@@ -303,9 +303,24 @@ const chairpersonStats = computed(() => {
     stats[chairperson.id] = chairperson.current_assignments || 0;
   });
   
+  // Initialize chairpersons from nominations that might not be in suggestions
+  nominations.value.forEach(nomination => {
+    if (nomination.chairperson) {
+      const chairpersonId = nomination.chairperson.id;
+      if (stats[chairpersonId] === undefined) {
+        // Use type assertion to access potential additional properties
+        const chairpersonData = nomination.chairperson as any;
+        stats[chairpersonId] = chairpersonData.current_assignments || 0;
+      }
+    }
+  });
+  
   // Add current session assignments
   assignments.value.forEach(assignment => {
-    if (assignment.chairperson_id && stats[assignment.chairperson_id] !== undefined) {
+    if (assignment.chairperson_id) {
+      if (stats[assignment.chairperson_id] === undefined) {
+        stats[assignment.chairperson_id] = 0;
+      }
       stats[assignment.chairperson_id]++;
     }
   });
@@ -444,7 +459,32 @@ const getSelectedChairpersonId = (item: any): number | null => {
 const getChairpersonOptionsForItem = (item: any) => {
   const selectedId = getSelectedChairpersonId(item);
   
-  return chairpersonOptions.value.filter(chairperson => {
+  // Start with chairpersons from suggestions
+  let options = [...chairpersonOptions.value];
+  
+  // If there's a selected chairperson that's not in the suggestions (likely due to max assignments),
+  // we need to add them to the options
+  if (selectedId) {
+    const selectedChairpersonInOptions = options.find(chairperson => chairperson.id === selectedId);
+    
+    if (!selectedChairpersonInOptions) {
+      // Find the selected chairperson from the nomination data
+      const selectedChairperson = item.chairperson;
+      
+      if (selectedChairperson && selectedChairperson.id === selectedId) {
+        // Add the selected chairperson to options even if they have max assignments
+        const chairpersonData = selectedChairperson as any;
+        options.push({
+          ...selectedChairperson,
+          // Ensure we have the required properties
+          current_assignments: chairpersonData.current_assignments || 0,
+          latest_academic_year_count: chairpersonData.latest_academic_year_count || 0,
+        });
+      }
+    }
+  }
+  
+  return options.filter(chairperson => {
     // Always include currently selected chairperson
     if (selectedId && chairperson.id === selectedId) {
       return true;
@@ -461,7 +501,7 @@ const getChairpersonOptionsForItem = (item: any) => {
       return false;
     }
     
-    // Check assignment limit
+    // Check assignment limit (but allow selected chairperson even if at max)
     const currentCount = chairpersonStats.value[chairperson.id] || 0;
     if (currentCount >= MAX_ASSIGNMENTS) {
       return false;
@@ -592,55 +632,6 @@ const seededRandom = (() => {
   };
 })();
 
-// Alternative version with seeded randomization (uncomment if needed):
-/*
-const findBestChairpersonWithStatsSeeded = (item: any, stats: Record<number, number>): SmartAssignmentResult | null => {
-  const requiresProfessor = needsProfessorChairperson(item);
-  
-  const validOptions = chairpersonOptions.value.filter(chairperson => {
-    if (item._conflictingIds.includes(chairperson.id)) {
-      return false;
-    }
-    
-    if (requiresProfessor && !isProfessor(chairperson)) {
-      return false;
-    }
-    
-    const currentCount = stats[chairperson.id] || 0;
-    if (currentCount >= MAX_ASSIGNMENTS) {
-      return false;
-    }
-    
-    return true;
-  });
-  
-  if (validOptions.length === 0) return null;
-  
-  // Group by assignment count
-  const groupsByCount: Record<number, ChairpersonCandidate[]> = {};
-  validOptions.forEach(chairperson => {
-    const count = stats[chairperson.id] || 0;
-    if (!groupsByCount[count]) {
-      groupsByCount[count] = [];
-    }
-    groupsByCount[count].push(chairperson);
-  });
-  
-  const minCount = Math.min(...Object.keys(groupsByCount).map(Number));
-  const candidatesWithMinCount = groupsByCount[minCount];
-  
-  // Use seeded random for reproducible results
-  const randomIndex = Math.floor(seededRandom() * candidatesWithMinCount.length);
-  const bestChairperson = candidatesWithMinCount[randomIndex];
-  const currentCount = stats[bestChairperson.id] || 0;
-  
-  return {
-    chairperson: bestChairperson,
-    reason: `Seeded random selection (${currentCount} assignments, ${candidatesWithMinCount.length} candidates)`
-  };
-};
-*/
-
 // Status helpers
 const hasChairpersonConflict = (item: any): boolean => {
   const chairpersonId = getSelectedChairpersonId(item);
@@ -651,6 +642,7 @@ const isChairpersonProfessor = (item: any): boolean => {
   const chairpersonId = getSelectedChairpersonId(item);
   if (!chairpersonId) return false;
   
+  // First try to find in chairperson options, then fall back to nomination data
   const chairperson = chairpersonOptions.value.find(c => c.id === chairpersonId) || item.chairperson;
   return isProfessor(chairperson);
 };
@@ -769,14 +761,40 @@ const lecturerDisplay = (item: any) => `${item.title ? item.title + ' ' : ''}${i
 
 // Helper method to get max assignments for a chairperson
 const getMaxAssignmentsForChairperson = (chairpersonId: number): number => {
+  // First try to find in chairperson options
   const chairperson = chairpersonOptions.value.find(c => c.id === chairpersonId);
-  return chairperson?.latest_academic_year_count || 4; // Fallback to 4 if not available
+  if (chairperson) {
+    return chairperson.latest_academic_year_count || 4;
+  }
+  
+  // If not found in options, try to find in nominations data
+  const nominationWithChairperson = nominations.value.find(n => n.chairperson?.id === chairpersonId);
+  if (nominationWithChairperson?.chairperson) {
+    // Use type assertion since chairperson from nomination might have additional properties
+    const chairpersonData = nominationWithChairperson.chairperson as any;
+    return chairpersonData.latest_academic_year_count || 4;
+  }
+  
+  return 4; // Fallback to 4 if not available
 };
 
 // Helper method to get latest academic year count for a chairperson
 const getLatestAcademicYearCount = (chairpersonId: number): number => {
+  // First try to find in chairperson options
   const chairperson = chairpersonOptions.value.find(c => c.id === chairpersonId);
-  return chairperson?.latest_academic_year_count || 0;
+  if (chairperson) {
+    return chairperson.latest_academic_year_count || 0;
+  }
+  
+  // If not found in options, try to find in nominations data
+  const nominationWithChairperson = nominations.value.find(n => n.chairperson?.id === chairpersonId);
+  if (nominationWithChairperson?.chairperson) {
+    // Use type assertion since chairperson from nomination might have additional properties
+    const chairpersonData = nominationWithChairperson.chairperson as any;
+    return chairpersonData.latest_academic_year_count || 0;
+  }
+  
+  return 0;
 };
 </script>
 
