@@ -7,6 +7,7 @@ A modern dashboard UI built with Nuxt.js and Vuetify, featuring a clean, respons
 ### Prerequisites
 
 - [Docker](https://www.docker.com/get-started) and Docker Compose
+- [Backend](https://github.com/SatuPadu/fses_backend)
 
 ### Setup & Run
 
@@ -24,3 +25,8 @@ A modern dashboard UI built with Nuxt.js and Vuetify, featuring a clean, respons
    ```
 
 3. Access the application at: http://localhost:8001
+
+4. Login with default username and password
+   ```bash
+   OA123456
+   ```
